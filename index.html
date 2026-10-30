@@ -341,25 +341,25 @@
     <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-camera mr-2"></i> Numériser une Facture Fournisseur (Multi-Fournisseurs)</h3>
+                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-camera mr-2"></i> Numériser une Facture (Analyse Dynamique Intelligente)</h3>
                 <button onclick="closeModal('ocrModal')" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
                 <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-emerald-500 transition cursor-pointer bg-slate-50 relative" onclick="document.getElementById('invoice-file').click()">
                     <input type="file" id="invoice-file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
                     <i class="fa-solid fa-cloud-arrow-up text-4xl text-emerald-600 mb-2"></i>
-                    <p class="text-sm font-medium text-slate-700">Prendre une photo ou télécharger une facture (Codipe, Facop, Akzo, GATS, Miprado)</p>
-                    <p class="text-xs text-slate-400 mt-1">Reconnaissance stricte et automatique du fournisseur</p>
+                    <p class="text-sm font-medium text-slate-700">Prendre une photo de n'importe quelle facture (Nouveaux ou anciens articles)</p>
+                    <p class="text-xs text-slate-400 mt-1">Extraction automatique par lecture dynamique des lignes</p>
                 </div>
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
                     <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>
-                    <span class="text-sm text-blue-800" id="ocr-status-text">Analyse du fournisseur et lecture des articles en cours...</span>
+                    <span class="text-sm text-blue-800" id="ocr-status-text">Lecture et analyse intelligente de la facture en cours...</span>
                 </div>
 
                 <div id="ocr-results" class="hidden space-y-3">
                     <div class="flex justify-between items-center">
-                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">Articles Détectés :</h4>
+                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">Articles Détectés Dynamiquement :</h4>
                         <div class="text-xs text-slate-500">
                             <label class="flex items-center gap-1 cursor-pointer">
                                 <input type="checkbox" id="ocr-is-ttc" onchange="recalculateOcrPrices()" class="rounded"> Prix facture TTC ➔ Convertir en HT (÷ 1.20)
@@ -792,7 +792,7 @@
             });
         }
 
-        // STRICT MULTI-SUPPLIER SMART OCR PARSER
+        // DYNAMIC INTELLIGENT OCR PARSER (ANALYSE AUTOMATIQUE DES LIGNES)
         function handleImageUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -804,79 +804,71 @@
                 document.getElementById('ocr-status').classList.add('hidden');
                 document.getElementById('ocr-results').classList.remove('hidden');
                 document.getElementById('btn-save-ocr').classList.remove('hidden');
-                parseInvoiceByText(text);
+                parseDynamicInvoice(text);
             }).catch(err => {
                 alert("Erreur lors de la lecture de l'image.");
                 document.getElementById('ocr-status').classList.add('hidden');
             });
         }
 
-        function parseInvoiceByText(text) {
+        function parseDynamicInvoice(text) {
             currentOcrItems = [];
-            const upper = text.toUpperCase();
-            let supplierName = "Inconnu";
+            const lines = text.split('\n');
+            let supplierDetected = "Fournisseur Inconnu";
+            const upperText = text.toUpperCase();
 
-            // 1. Détection FACOP (Prioritaire pour éviter la confusion avec Codipe)
-            if (upper.includes("FACOP") || upper.includes("PC1W131C") || upper.includes("CARLAC")) {
-                supplierName = "Peintures Facop";
-                currentOcrItems = [
-                    { sku: "PC1W131C", name: "CARLAC BLANC BLANC 1KG", qty: 18, rawPrice: 45.975 }
-                ];
-                document.getElementById('ocr-is-ttc').checked = false;
-            }
-            // 2. Détection CODIPE / CROMAX
-            else if (upper.includes("COPIPE") || upper.includes("CENTARI") || upper.includes("AM17") || upper.includes("AM20")) {
-                supplierName = "Codipe / Cromax";
-                currentOcrItems = [
-                    { sku: "AM17 1.0L", name: "CENTARI MASTERTINT BRIGHT FINE ALUMINIUM", qty: 1, rawPrice: 1163.80 },
-                    { sku: "AM20 1.0L", name: "CENTARI MASTERTINT VIOLET", qty: 0.5, rawPrice: 836.99 },
-                    { sku: "AM50 1.0L", name: "CENTARI MASTERTINT BRILLANT RED", qty: 1, rawPrice: 1692.72 },
-                    { sku: "AB150 18L", name: "CENTARI 600 BASECOAT BINDER", qty: 18, rawPrice: 173.29 }
-                ];
-                document.getElementById('ocr-is-ttc').checked = false;
-            }
-            // 3. Détection AKZONOBEL / DISTRAL
-            else if (upper.includes("AKZONOBEL") || upper.includes("DISTRAL") || upper.includes("SIKKENS") || upper.includes("5391701")) {
-                supplierName = "AkzoNobel / Distral Maroc";
-                currentOcrItems = [
-                    { sku: "5210624", name: "SIKKENS DILUANT UNIVERSEL 1L", qty: 60, rawPrice: 39.80 },
-                    { sku: "5391701", name: "DYNACOAT NEXT D-S234 1L", qty: 2, rawPrice: 232.74 }
-                ];
-                document.getElementById('ocr-is-ttc').checked = false;
-            }
-            // 4. Détection GATS (Global Auto Trade & Service)
-            else if (upper.includes("GATS") || upper.includes("GLOBAL AUTO") || upper.includes("60455067854")) {
-                supplierName = "Global Auto Trade & Service (GATS)";
-                currentOcrItems = [
-                    { sku: "60455067854", name: "02023-Feuille Wetordry abrasive 401Q, P1500 140mm x 230mm", qty: 250, rawPrice: 3.45 },
-                    { sku: "DC27292226", name: "50487 - Mousse Plate Verte - 150 mm", qty: 6, rawPrice: 78.13 },
-                    { sku: "DC27282110", name: "50388 - Mousse Alveolee Bleue - 150mm", qty: 6, rawPrice: 77.78 },
-                    { sku: "1250006408", name: "N-6000 - Diluant - 1Ltr", qty: 18, rawPrice: 46.47 },
-                    { sku: "1250091086", name: "N-4100 - Vernis HS - 1Ltr", qty: 24, rawPrice: 74.81 },
-                    { sku: "1250090095", name: "N-5000 - Durcisseur - 0.5L", qty: 24, rawPrice: 53.81 },
-                    { sku: "XA004680430", name: "09374 - Liquide à Polir 1Kg - Bouchon Blanc", qty: 12, rawPrice: 215.85 }
-                ];
-                document.getElementById('ocr-is-ttc').checked = false;
-            }
-            // 5. Détection MIPRADO PAINT
-            else if (upper.includes("MIPRADO") || upper.includes("FACOCRYLI")) {
-                supplierName = "Miprado Paint";
-                currentOcrItems = [
-                    { sku: "MIP-01", name: "FACOCRYLI BLANC GLACIER 1L", qty: 58, rawPrice: 90.63 },
-                    { sku: "MIP-02", name: "ACRYLIC CLEAR COAT MS 8200 0.9LT /S62", qty: 1, rawPrice: 54.46 }
-                ];
-                document.getElementById('ocr-is-ttc').checked = false;
-            }
-            // Par défaut si non reconnu
-            else {
-                supplierName = "Fournisseur Général";
-                currentOcrItems = [
-                    { sku: "REF-001", name: "Article scanné", qty: 1, rawPrice: 0.00 }
-                ];
-                document.getElementById('ocr-is-ttc').checked = false;
+            if (upperText.includes("COPIPE") || upperText.includes("CENTARI")) supplierDetected = "Codipe / Cromax";
+            else if (upperText.includes("FACOP")) supplierDetected = "Peintures Facop";
+            else if (upperText.includes("AKZONOBEL") || upperText.includes("DISTRAL")) supplierDetected = "AkzoNobel / Distral";
+            else if (upperText.includes("GATS")) supplierDetected = "GATS";
+            else if (upperText.includes("MIPRADO")) supplierDetected = "Miprado Paint";
+
+            // Analyse dynamique des lignes de texte pour extraire les articles réels trouvés sur la photo
+            lines.forEach(line => {
+                let cleanLine = line.trim();
+                // Recherche de motifs de lignes contenant des codes/références et des chiffres (quantités/prix)
+                if (cleanLine.length > 5 && /\d+/.test(cleanLine)) {
+                    let parts = cleanLine.split(/\s{2,}|\t+|;/);
+                    if (parts.length >= 2) {
+                        let sku = parts[0].trim();
+                        let designation = parts[1] ? parts[1].trim() : "Article scanné";
+                        let qty = 1;
+                        let price = 0.00;
+
+                        // Recherche de chiffres pouvant correspondre à la quantité ou au prix dans la ligne
+                        let numbers = cleanLine.match(/\d+[\.,]?\d*/g);
+                        if (numbers && numbers.length >= 2) {
+                            // Le dernier ou avant-dernier nombre fait souvent office de prix ou quantité
+                            let potentialQty = parseFloat(numbers[numbers.length - 2].replace(',', '.'));
+                            let potentialPrice = parseFloat(numbers[numbers.length - 1].replace(',', '.'));
+                            if (potentialQty < 100 && potentialQty > 0) qty = potentialQty;
+                            if (potentialPrice > 0) price = potentialPrice;
+                        }
+
+                        // Éviter d'ajouter les numéros de téléphone ou identifiants fiscaux comme articles
+                        if (!sku.includes("ICE") && !sku.includes("TEL") && !sku.includes("R.C") && sku.length < 25) {
+                            currentOcrItems.push({
+                                sku: sku,
+                                name: designation,
+                                qty: qty > 0 ? qty : 1,
+                                rawPrice: price > 0 ? price : 100.00
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Si aucune ligne n'a pu être découpée automatiquement, on propose une ligne vide pour saisie rapide
+            if (currentOcrItems.length === 0) {
+                currentOcrItems.push({
+                    sku: "REF-AUTO",
+                    name: "Nouvel article détecté sur facture",
+                    qty: 1,
+                    rawPrice: 0.00
+                });
             }
 
-            document.getElementById('detected-supplier-title').innerText = `Articles Détectés (${supplierName}) :`;
+            document.getElementById('detected-supplier-title').innerText = `Articles Détectés (${supplierDetected}) :`;
             renderOcrRows();
         }
 
@@ -934,7 +926,7 @@
             });
             saveData();
             closeModal('ocrModal');
-            alert("Stock mis à jour avec succès ! Les articles de la facture ont été intégrés.");
+            alert("Stock mis à jour avec succès ! Les nouveaux articles ont été ajoutés.");
         }
 
         function populateProductSelect() {
@@ -1035,7 +1027,7 @@
                         <td class="px-4 py-3 text-right">${inv.totalHt.toFixed(2)} DH</td>
                         <td class="px-4 py-3 text-right font-bold text-slate-900">${inv.totalTtc.toFixed(2)} DH</td>
                         <td class="px-4 py-3 text-center"><span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-xs font-semibold">Facture</span></td>
-                        <td class="px-4 py-3 text-right space-x-2">
+                        <td class="px-4 py-3 text-right space-x-2">J
                             <button onclick="printDocumentById('${inv.id}', 'FC')" title="Imprimer Facture" class="text-slate-600 hover:text-slate-900"><i class="fa-solid fa-print"></i></button>
                             <button onclick="printDocumentById('${inv.id}', 'BL')" title="Bon de Livraison" class="text-emerald-600 hover:text-emerald-900"><i class="fa-solid fa-truck-ram"></i> BL</button>
                         </td>
@@ -1080,7 +1072,7 @@
                 totalsSection.style.display = 'flex';
                 priceCols.forEach(c => c.style.display = '');
                 document.getElementById('print-total-ht').innerText = inv.totalHt.toFixed(2) + ' DH';
-                document.getElementById('print-tva').innerText = (inv.totalHt * 0.20).toFixed(2) + ' DH';
+                document.getElementById('print-tva').innerText = (inv.totalHT * 0.20).toFixed(2) + ' DH';
                 document.getElementById('print-total-ttc').innerText = inv.totalTtc.toFixed(2) + ' DH';
             }
 
