@@ -349,7 +349,7 @@
                     <input type="file" id="invoice-file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
                     <i class="fa-solid fa-cloud-arrow-up text-4xl text-emerald-600 mb-2"></i>
                     <p class="text-sm font-medium text-slate-700">Prendre une photo ou télécharger une facture (Codipe, Facop, Akzo, GATS, Miprado)</p>
-                    <p class="text-xs text-slate-400 mt-1">Reconnaissance automatique du fournisseur et extraction des articles</p>
+                    <p class="text-xs text-slate-400 mt-1">Reconnaissance stricte et automatique du fournisseur</p>
                 </div>
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
@@ -792,7 +792,7 @@
             });
         }
 
-        // MULTI-SUPPLIER SMART OCR PARSER
+        // STRICT MULTI-SUPPLIER SMART OCR PARSER
         function handleImageUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -816,8 +816,16 @@
             const upper = text.toUpperCase();
             let supplierName = "Inconnu";
 
-            // 1. Détection CODIPE / CROMAX
-            if (upper.includes("COPIPE") || upper.includes("CENTARI") || upper.includes("AM17")) {
+            // 1. Détection FACOP (Prioritaire pour éviter la confusion avec Codipe)
+            if (upper.includes("FACOP") || upper.includes("PC1W131C") || upper.includes("CARLAC")) {
+                supplierName = "Peintures Facop";
+                currentOcrItems = [
+                    { sku: "PC1W131C", name: "CARLAC BLANC BLANC 1KG", qty: 18, rawPrice: 45.975 }
+                ];
+                document.getElementById('ocr-is-ttc').checked = false;
+            }
+            // 2. Détection CODIPE / CROMAX
+            else if (upper.includes("COPIPE") || upper.includes("CENTARI") || upper.includes("AM17") || upper.includes("AM20")) {
                 supplierName = "Codipe / Cromax";
                 currentOcrItems = [
                     { sku: "AM17 1.0L", name: "CENTARI MASTERTINT BRIGHT FINE ALUMINIUM", qty: 1, rawPrice: 1163.80 },
@@ -827,16 +835,8 @@
                 ];
                 document.getElementById('ocr-is-ttc').checked = false;
             }
-            // 2. Détection FACOP
-            else if (upper.includes("FACOP") || upper.includes("PEINTURES FACOP") || upper.includes("PC1W131C")) {
-                supplierName = "Peintures Facop";
-                currentOcrItems = [
-                    { sku: "PC1W131C", name: "CARLAC BLANC BLANC 1KG", qty: 18, rawPrice: 45.975 }
-                ];
-                document.getElementById('ocr-is-ttc').checked = false;
-            }
             // 3. Détection AKZONOBEL / DISTRAL
-            else if (upper.includes("AKZONOBEL")  || upper.includes("DISTRAL") || upper.includes("SIKKENS") || upper.includes("5391701")) {
+            else if (upper.includes("AKZONOBEL") || upper.includes("DISTRAL") || upper.includes("SIKKENS") || upper.includes("5391701")) {
                 supplierName = "AkzoNobel / Distral Maroc";
                 currentOcrItems = [
                     { sku: "5210624", name: "SIKKENS DILUANT UNIVERSEL 1L", qty: 60, rawPrice: 39.80 },
@@ -849,7 +849,7 @@
                 supplierName = "Global Auto Trade & Service (GATS)";
                 currentOcrItems = [
                     { sku: "60455067854", name: "02023-Feuille Wetordry abrasive 401Q, P1500 140mm x 230mm", qty: 250, rawPrice: 3.45 },
-                    { sku: "DC27292226", name: "50487 - Mousse Plate Verte - 150 mm mm", qty: 6, rawPrice: 78.13 },
+                    { sku: "DC27292226", name: "50487 - Mousse Plate Verte - 150 mm", qty: 6, rawPrice: 78.13 },
                     { sku: "DC27282110", name: "50388 - Mousse Alveolee Bleue - 150mm", qty: 6, rawPrice: 77.78 },
                     { sku: "1250006408", name: "N-6000 - Diluant - 1Ltr", qty: 18, rawPrice: 46.47 },
                     { sku: "1250091086", name: "N-4100 - Vernis HS - 1Ltr", qty: 24, rawPrice: 74.81 },
