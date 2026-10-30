@@ -335,7 +335,7 @@
         </div>
     </div>
 
-    <!-- MODAL: VERYFI AI INVOICE SCANNER -->
+    <!-- MODAL: VERYFI SCANNER WITH 2 CHOICES (CAMERA OR GALLERY) -->
     <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
@@ -343,11 +343,22 @@
                 <button onclick="closeModal('ocrModal')" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
-                <div class="border-2 border-dashed border-emerald-400 rounded-xl p-6 text-center hover:border-emerald-600 transition cursor-pointer bg-emerald-50/50 relative" onclick="document.getElementById('invoice-file').click()">
-                    <input type="file" id="invoice-file" accept="image/*" class="hidden" onchange="handleVeryfiUpload(event)">
-                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-emerald-600 mb-2"></i>
-                    <p class="text-sm font-medium text-slate-700">Prendre une photo ou importer une facture</p>
-                    <p class="text-xs text-slate-500 mt-1">Extraction automatique de haute précision via Veryfi AI</p>
+                <!-- Inputs cachés pour la caméra et la galerie -->
+                <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="handleVeryfiUpload(event)">
+                <input type="file" id="gallery-file" accept="image/*" class="hidden" onchange="handleVeryfiUpload(event)">
+
+                <!-- 2 Options visuelles -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div onclick="document.getElementById('camera-file').click()" class="border-2 border-dashed border-emerald-400 rounded-xl p-6 text-center hover:border-emerald-600 transition cursor-pointer bg-emerald-50/50 flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-camera-retro text-4xl text-emerald-600 mb-2"></i>
+                        <p class="text-sm font-bold text-slate-800">Ouvrir la Caméra</p>
+                        <p class="text-xs text-slate-500 mt-1">Prendre une photo directe de la facture</p>
+                    </div>
+                    <div onclick="document.getElementById('gallery-file').click()" class="border-2 border-dashed border-blue-400 rounded-xl p-6 text-center hover:border-blue-600 transition cursor-pointer bg-blue-50/50 flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-image text-4xl text-blue-600 mb-2"></i>
+                        <p class="text-sm font-bold text-slate-800">Importer une Facture</p>
+                        <p class="text-xs text-slate-500 mt-1">Choisir une image depuis votre appareil</p>
+                    </div>
                 </div>
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
@@ -527,9 +538,9 @@
 
     <!-- JAVASCRIPT APPLICATION LOGIC -->
     <script>
-        const VERYFI_CLIENT_ID = "vrfD655vfxgWVxgM1XO9bac3awRJdcCsbn2R";[span_2](start_span)[span_2](end_span)
-        const VERYFI_API_KEY = "167ef8b588b8d260cf0d159427e08c0e";[span_3](start_span)[span_3](end_span)
-        const VERYFI_USERNAME = "hyncoatquartz";[span_4](start_span)[span_4](end_span)
+        const VERYFI_CLIENT_ID = "vrfD655vfxgWVxgM1XO9bac3awRJdcCsbn2R";[span_0](start_span)[span_0](end_span)
+        const VERYFI_API_KEY = "167ef8b588b8d260cf0d159427e08c0e";[span_1](start_span)[span_1](end_span)
+        const VERYFI_USERNAME = "hyncoatquartz";[span_2](start_span)[span_2](end_span)
 
         let products = JSON.parse(localStorage.getItem('hq_products')) || [];
         let suppliers = JSON.parse(localStorage.getItem('hq_suppliers')) || [];
@@ -580,6 +591,10 @@
                 document.getElementById('supplierForm').reset();
                 document.getElementById('supp-id').value = '';
                 document.getElementById('supplierModalTitle').innerText = "Nouveau Fournisseur";
+            } else if(id === 'ocrModal') {
+                document.getElementById('ocr-status').classList.add('hidden');
+                document.getElementById('ocr-results').classList.add('hidden');
+                document.getElementById('btn-save-ocr').classList.add('hidden');
             }
         }
         function closeModal(id) { 
@@ -1067,7 +1082,6 @@
             } else {
                 totalsSection.style.display = 'flex';
                 priceCols.forEach(c => c.style.display = '');
-                document.getElementById('print-total-ht').innerText = inv.totalHt.toFixed(2) + ' DH';
                 document.getElementById('print-total-ht').innerText = inv.totalHt.toFixed(2) + ' DH';
                 document.getElementById('print-tva').innerText = (inv.totalHt * 0.20).toFixed(2) + ' DH';
                 document.getElementById('print-total-ttc').innerText = inv.totalTtc.toFixed(2) + ' DH';
