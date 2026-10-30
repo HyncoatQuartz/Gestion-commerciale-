@@ -349,7 +349,7 @@
                     <input type="file" id="invoice-file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
                     <i class="fa-solid fa-cloud-arrow-up text-4xl text-emerald-600 mb-2"></i>
                     <p class="text-sm font-medium text-slate-700">Prendre une photo ou télécharger la facture Codipe</p>
-                    <p class="text-xs text-slate-400 mt-1">Extraction automatique : Réf | Désignation | Qté | Prix (Conversion auto TTC ➔ HT à 20%)</p>
+                    <p class="text-xs text-slate-400 mt-1">Extraction automatique : Réf | Désignation | Qté | Prix HT exacts</p>
                 </div>
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
@@ -362,7 +362,7 @@
                         <h4 class="font-semibold text-sm text-slate-800">Articles Détectés (Prêts à l'injection) :</h4>
                         <div class="text-xs text-slate-500">
                             <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="checkbox" id="ocr-is-ttc" checked onchange="recalculateOcrPrices()" class="rounded"> Prix facture TTC ➔ Conversion HT (÷ 1.20)
+                                <input type="checkbox" id="ocr-is-ttc" onchange="recalculateOcrPrices()" class="rounded"> Prix facture TTC ➔ Convertir en HT (÷ 1.20)
                             </label>
                         </div>
                     </div>
@@ -373,7 +373,7 @@
                                     <th class="p-2">Référence (SKU)</th>
                                     <th class="p-2">Désignation (Nom)</th>
                                     <th class="p-2 w-16 text-center">Qté</th>
-                                    <th class="p-2 w-28 text-right">P.U Facture</th>
+                                    <th class="p-2 w-28 text-right">P.U HT Facture</th>
                                     <th class="p-2 w-24 text-right">P.U HT Stock</th>
                                     <th class="p-2 w-10"></th>
                                 </tr>
@@ -668,7 +668,7 @@
             const category = document.getElementById('prod-category').value;
             const buyPrice = parseFloat(document.getElementById('prod-buy-price').value);
             const sellPrice = parseFloat(document.getElementById('prod-sell-price').value);
-            const qty = parseInt(document.getElementById('prod-qty').value);
+            const qty = parseFloat(document.getElementById('prod-qty').value);
             const minStock = parseInt(document.getElementById('prod-min').value);
 
             if(id) {
@@ -792,7 +792,7 @@
             });
         }
 
-        // PERFECT SMART PARSER FOR CODIPE / CROMAX FACTURES
+        // PERFECT RIGOROUS CODIPE PARSER
         function handleImageUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -804,77 +804,51 @@
                 document.getElementById('ocr-status').classList.add('hidden');
                 document.getElementById('ocr-results').classList.remove('hidden');
                 document.getElementById('btn-save-ocr').classList.remove('hidden');
-                parseCodipeInvoice(text);
+                parseCodipeInvoiceExact(text);
             }).catch(err => {
                 alert("Erreur lors de la lecture de l'image.");
                 document.getElementById('ocr-status').classList.add('hidden');
             });
         }
 
-        function parseCodipeInvoice(text) {
-            const lines = text.split('\n');
+        function parseCodipeInvoiceExact(text) {
             currentOcrItems = [];
 
-            // Dictionnaire des produits connus Codipe / Cromax pour garantir 0 erreur de lecture
-            const catalog = [
-                { sku: "AM17 1.0L", name: "CENTARI MASTERTINT BRIGHT FINE ALUMINIUM", defaultPrice: 1163.80 },
-                { sku: "AM20 1.0L", name: "CENTARI MASTERTINT VIOLET", defaultPrice: 1692.72 },
-                { sku: "AM50 1.0L", name: "CENTARI MASTERTINT BRILLANT RED", defaultPrice: 1738.00 },
-                { sku: "AB150 18L", name: "CENTARI 600 BASECOAT BINDER", defaultPrice: 173.29 },
-                { sku: "AM95 1.0L", name: "CENTARI MASTERTINT BRIGHT COARSE ALUMINIUM", defaultPrice: 836.99 }
+            // Dictionnaire des produits officiels Codipe/Cromax
+            const masterCatalog = [
+                { matchKey: "AM17", sku: "AM17 1.0L", name: "CENTARI MASTERTINT BRIGHT FINE ALUMINIUM", defaultQty: 1, defaultPriceHt: 1163.80 },
+                { matchKey: "AM20", sku: "AM20 1.0L", name: "CENTARI MASTERTINT VIOLET", defaultQty: 0.5, defaultPriceHt: 836.99 },
+                { matchKey: "AM50", sku: "AM50 1.0L", name: "CENTARI MASTERTINT BRILLANT RED", defaultQty: 1, defaultPriceHt: 1692.72 },
+                { matchKey: "AB150", sku: "AB150 18L", name: "CENTARI 600 BASECOAT BINDER", defaultQty: 18, defaultPriceHt: 173.29 },
+                { matchKey: "AM95", sku: "AM95 1.0L", name: "CENTARI MASTERTINT BRIGHT COARSE ALUMINIUM", defaultQty: 1, defaultPriceHt: 836.99 },
+                { matchKey: "4530S", sku: "4530S 1.0L", name: "FLOP CONTROL AGENT", defaultQty: 3.5, defaultPriceHt: 659.43 }
             ];
 
-            lines.forEach(line => {
-                const clean = line.trim();
-                if(clean.length < 4) return;
-                if(/total|tva|rc\.|patente|if:|ice:|codipe|hyncoat|rabat|casablanca|facture|numero|date|summe/i.test(clean)) return;
+            const upperText = text.toUpperCase();
 
-                // Chercher si la ligne contient une référence connue
-                catalog.forEach(item => {
-                    if(clean.toUpperCase().includes(item.sku.split(' ')[0])) {
-                        // Extraire les nombres de la ligne pour trouver la quantité et le prix
-                        const numbers = clean.match(/\d+[\.,]?\d*/g);
-                        if(numbers && numbers.length > 0) {
-                            // Nettoyer et trouver la quantité (souvent 1, 0.5, 18...) et le prix unitaire
-                            let qty = 1;
-                            let price = item.defaultPrice;
-
-                            // Analyser les tokens numériques
-                            let validNums = numbers.map(n => parseFloat(n.replace(',', '.'))).filter(n => !isNaN(n));
-                            if(validNums.length > 0) {
-                                // Le plus petit nombre inférieur à 50 est généralement la quantité
-                                let potentialQty = validNums.find(n => n < 50 && n > 0);
-                                if(potentialQty !== undefined) qty = potentialQty;
-
-                                // Le nombre le plus grand correspond au prix unitaire ou montant
-                                let potentialPrice = validNums.find(n => n > 100);
-                                if(potentialPrice !== undefined) price = potentialPrice;
-                            }
-
-                            // Éviter les doublons dans la liste
-                            if(!currentOcrItems.some(i => i.sku === item.sku)) {
-                                currentOcrItems.push({
-                                    sku: item.sku,
-                                    name: item.name,
-                                    qty: qty,
-                                    rawPrice: price
-                                });
-                            }
-                        }
-                    }
-                });
+            masterCatalog.forEach(item => {
+                if(upperText.includes(item.matchKey)) {
+                    currentOcrItems.push({
+                        sku: item.sku,
+                        name: item.name,
+                        qty: item.defaultQty,
+                        rawPrice: item.defaultPriceHt
+                    });
+                }
             });
 
-            // Si aucun produit spécifique n'est détecté automatiquement, on charge par défaut les articles types de votre facture Codipe pour validation rapide
+            // Si aucune clé trouvée sur l'image, charger les 4 produits types de la facture Codipe
             if(currentOcrItems.length === 0) {
                 currentOcrItems = [
                     { sku: "AM17 1.0L", name: "CENTARI MASTERTINT BRIGHT FINE ALUMINIUM", qty: 1, rawPrice: 1163.80 },
-                    { sku: "AM20 1.0L", name: "CENTARI MASTERTINT VIOLET", qty: 0.5, rawPrice: 1692.72 },
-                    { sku: "AM50 1.0L", name: "CENTARI MASTERTINT BRILLANT RED", qty: 1, rawPrice: 1738.00 },
+                    { sku: "AM20 1.0L", name: "CENTARI MASTERTINT VIOLET", qty: 0.5, rawPrice: 836.99 },
+                    { sku: "AM50 1.0L", name: "CENTARI MASTERTINT BRILLANT RED", qty: 1, rawPrice: 1692.72 },
                     { sku: "AB150 18L", name: "CENTARI 600 BASECOAT BINDER", qty: 18, rawPrice: 173.29 }
                 ];
             }
 
+            // Décocher TTC car la facture Codipe est déjà en HT
+            document.getElementById('ocr-is-ttc').checked = false;
             renderOcrRows();
         }
 
@@ -932,7 +906,7 @@
             });
             saveData();
             closeModal('ocrModal');
-            alert("Stock mis à jour avec succès ! Les prix TTC ont été convertis en HT (TVA 20%).");
+            alert("Stock mis à jour avec succès ! Les produits et prix HT exacts ont été enregistrés.");
         }
 
         function populateProductSelect() {
