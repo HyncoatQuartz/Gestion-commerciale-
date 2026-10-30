@@ -812,7 +812,7 @@
         }
 
         function loadExactCodipeInvoice4Articles() {
-            // Chargement direct, rigoureux et sans erreur des 4 articles officiels de la facture Codipe[span_6](start_span)[span_6](end_span)
+            // Chargement direct, rigoureux des 4 articles officiels de la facture Codipe avec leurs 4 lignes exactes
             currentOcrItems = [
                 { sku: "AM17 1.0L", name: "CENTARI MASTERTINT BRIGHT FINE ALUMINIUM", qty: 1, rawPrice: 1163.80 },
                 { sku: "AM20 1.0L", name: "CENTARI MASTERTINT VIOLET", qty: 0.5, rawPrice: 836.99 },
@@ -820,7 +820,7 @@
                 { sku: "AB150 18L", name: "CENTARI 600 BASECOAT BINDER", qty: 18, rawPrice: 173.29 }
             ];
 
-            // Décocher TTC car la facture Codipe est déjà en HT[span_7](start_span)[span_7](end_span)
+            // Décocher TTC car la facture Codipe est déjà en HT[span_2](start_span)[span_2](end_span)
             document.getElementById('ocr-is-ttc').checked = false;
             renderOcrRows();
         }
