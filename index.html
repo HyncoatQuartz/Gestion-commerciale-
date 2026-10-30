@@ -41,7 +41,7 @@
             <!-- Quick Action Buttons -->
             <div class="flex items-center space-x-2 sm:space-x-3">
                 <button onclick="openModal('supplierModal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center shadow-sm">
-                    <i class="fa-solid fa-truck-field mr-1.5"></i> <span class="hidden sm:inline">نouveau </span>Fournisseur
+                    <i class="fa-solid fa-truck-field mr-1.5"></i> <span class="hidden sm:inline">Nouveau </span>Fournisseur
                 </button>
                 <button onclick="openModal('productModal')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center shadow-sm">
                     <i class="fa-solid fa-plus mr-1.5"></i> <span class="hidden sm:inline">Nouveau </span>Produit
@@ -341,28 +341,28 @@
     <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-camera mr-2"></i> قراءة الفاتورة تلقائياً واستخراج المنتجات الجديدة</h3>
+                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-camera mr-2"></i> مسح الفاتورة واستخراج المنتجات بدقة</h3>
                 <button onclick="closeModal('ocrModal')" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
                 <div class="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-emerald-500 transition cursor-pointer bg-slate-50 relative" onclick="document.getElementById('invoice-file').click()">
                     <input type="file" id="invoice-file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
                     <i class="fa-solid fa-cloud-arrow-up text-4xl text-emerald-600 mb-2"></i>
-                    <p class="text-sm font-medium text-slate-700">التقاط صورة أو تحميل أي فاتورة جديدة (مهما كانت المنتجات)</p>
-                    <p class="text-xs text-slate-400 mt-1">التطبيق سيقوم بتحليل السطور واستخراج المراجع، الكميات، والأسمنة تلقائياً</p>
+                    <p class="text-sm font-medium text-slate-700">تصوير أو رفع الفاتورة الجديدة</p>
+                    <p class="text-xs text-slate-400 mt-1">قراءة السطور، الكميات، والأسعار تلقائياً وتصحيح الأخطاء</p>
                 </div>
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
                     <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>
-                    <span class="text-sm text-blue-800" id="ocr-status-text">جاري قراءة الفاتورة واستخراج المنتجات الجديدة الذكية...</span>
+                    <span class="text-sm text-blue-800" id="ocr-status-text">جاري تحليل نصوص الفاتورة بدقة...</span>
                 </div>
 
                 <div id="ocr-results" class="hidden space-y-3">
                     <div class="flex justify-between items-center">
-                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">المنتجات المستخرجة من الفاتورة :</h4>
+                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">المنتجات المستخرجة :</h4>
                         <div class="text-xs text-slate-500">
                             <label class="flex items-center gap-1 cursor-pointer">
-                                <input type="checkbox" id="ocr-is-ttc" onchange="recalculateOcrPrices()" class="rounded"> الثمن في الفاتورة TTC ➔ تحويل إلى HT (قسمة على 1.20)
+                                <input type="checkbox" id="ocr-is-ttc" onchange="recalculateOcrPrices()" class="rounded"> الثمن TTC ➔ تحويل إلى HT (÷ 1.20)
                             </label>
                         </div>
                     </div>
@@ -382,14 +382,14 @@
                         </table>
                     </div>
                     <button onclick="addOcrItemRow()" class="text-xs text-emerald-600 font-semibold hover:underline flex items-center">
-                        <i class="fa-solid fa-plus mr-1"></i> إضافة سطر يدوياً إذا لزم الأمر
+                        <i class="fa-solid fa-plus mr-1"></i> إضافة سطر يدوياً إذا احتجت لذلك
                     </button>
                 </div>
             </div>
             <div class="bg-slate-50 px-6 py-3 border-t flex justify-end space-x-3">
                 <button type="button" onclick="closeModal('ocrModal')" class="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-600 hover:bg-slate-100">إلغاء</button>
                 <button type="button" onclick="commitOcrItemsToStock()" id="btn-save-ocr" class="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700 hidden">
-                    حفظ وإدخال المنتجات للمخزون
+                    حفظ وإدخال للمخزون
                 </button>
             </div>
         </div>
@@ -792,7 +792,7 @@
             });
         }
 
-        // --- 100% DYNAMIC & INTELLIGENT OCR PARSER (قراءة حقيقية لأي فاتورة جديدة) ---
+        // --- SMART CLEAN OCR PARSER (تنقية وتحليل النصوص الذكية للفاتورة) ---
         function handleImageUpload(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -804,14 +804,14 @@
                 document.getElementById('ocr-status').classList.add('hidden');
                 document.getElementById('ocr-results').classList.remove('hidden');
                 document.getElementById('btn-save-ocr').classList.remove('hidden');
-                parseTrulyDynamicInvoice(text);
+                parseCleanInvoice(text);
             }).catch(err => {
                 alert("Erreur lors de la lecture de l'image.");
                 document.getElementById('ocr-status').classList.add('hidden');
             });
         }
 
-        function parseTrulyDynamicInvoice(text) {
+        function parseCleanInvoice(text) {
             currentOcrItems = [];
             const lines = text.split('\n');
             let detectedSupplier = "Fournisseur Inconnu";
@@ -823,12 +823,11 @@
             else if (upperText.includes("GATS")) detectedSupplier = "GATS";
             else if (upperText.includes("MIPRADO")) detectedSupplier = "Miprado Paint";
 
-            // تحليل السطور بدقة لاستخراج أي منتج جديد في الفاتورة الحالية
+            // فلترة السطور واستخراج الكلمات الحقيقية
             lines.forEach(line => {
                 let cleanLine = line.trim();
-                // البحث عن الأسطر التي تحتوي على حروف وأرقام (رموز المنتجات أو أثمان)
-                if (cleanLine.length > 3 && /\d/.test(cleanLine)) {
-                    // تجاهل سطور العناوين، الضرائب، والتعريفات القانونية
+                // نبحث عن السطور التي طولها مناسب وتحتوي على أرقام (أثمان أو كميات) وليست معلومات إدارية
+                if (cleanLine.length > 4 && /\d/.test(cleanLine)) {
                     if (
                         !cleanLine.includes("ICE") && 
                         !cleanLine.includes("RC") && 
@@ -837,52 +836,45 @@
                         !cleanLine.includes("TVA") && 
                         !cleanLine.includes("RABAT") &&
                         !cleanLine.includes("CASABLANCA") &&
-                        !cleanLine.includes("TEL")
+                        !cleanLine.includes("TEL") &&
+                        !cleanLine.includes("ARRETE")
                     ) {
-                        let parts = cleanLine.split(/\s{2,}|\t+|;/);
-                        let sku = parts[0] ? parts[0].trim() : "REF-NEW";
-                        let name = parts[1] ? parts[1].trim() : cleanLine;
-                        let qty = 1;
-                        let price = 0.00;
-
-                        // استخراج الأرقام من السطر لمعرفة الكمية والثمن
                         let numbers = cleanLine.match(/\d+[\.,]?\d*/g);
+                        // إذا وجدنا أرقام في السطر (يعني غالباً سطر منتج فيه كمية أو ثمن)
                         if (numbers && numbers.length > 0) {
-                            // محاولة استخراج الأثمان والكميات بدقة من الأرقام الموجودة في السطر
-                            let lastNum = parseFloat(numbers[numbers.length - 1].replace(',', '.'));
-                            if (lastNum > 0) price = lastNum;
-                            
+                            let price = parseFloat(numbers[numbers.length - 1].replace(',', '.'));
+                            let qty = 1;
                             if (numbers.length > 1) {
-                                let secondLast = parseFloat(numbers[numbers.length - 2].replace(',', '.'));
-                                if (secondLast > 0 && secondLast < 1000) {
-                                    qty = secondLast;
-                                }
+                                let potentialQty = parseFloat(numbers[numbers.length - 2].replace(',', '.'));
+                                if (potentialQty > 0 && potentialQty < 500) qty = potentialQty;
                             }
-                        }
 
-                        if (sku.length < 20 && price > 0) {
-                            currentOcrItems.push({
-                                sku: sku,
-                                name: name,
-                                qty: qty > 0 ? qty : 1,
-                                rawPrice: price
-                            });
+                            // تنظيف اسم المنتج وإزالة الأرقام الأخيرة منه
+                            let namePart = cleanLine.replace(/[\d\.,]+$/, '').trim();
+                            if (namePart.length < 3) namePart = "Article " + (currentOcrItems.length + 1);
+
+                            if (price > 0 && price < 100000) {
+                                currentOcrItems.push({
+                                    sku: "REF-" + (currentOcrItems.length + 1),
+                                    name: namePart,
+                                    qty: qty,
+                                    rawPrice: price
+                                });
+                            }
                         }
                     }
                 }
             });
 
-            // إذا لم يجد السطور تلقائياً لسبب ما، يفتح سطر فارغ لتعبئته بسهولة
+            // إذا تعذر استخراج السطور بدقة، نعطي سطرين جاهزين للتعديل السريع بدلاً من ترك الجدول فارغاً
             if (currentOcrItems.length === 0) {
-                currentOcrItems.push({
-                    sku: "REF-01",
-                    name: "Article scanné (Nouveau)",
-                    qty: 1,
-                    rawPrice: 0.00
-                });
+                currentOcrItems.push(
+                    { sku: "ART-01", name: "Produit scanné 1", qty: 1, rawPrice: 0.00 },
+                    { sku: "ART-02", name: "Produit scanné 2", qty: 1, rawPrice: 0.00 }
+                );
             }
 
-            document.getElementById('detected-supplier-title').innerText = `المنتجات المستخرجة (${detectedSupplier}) - جديدة كلياً:`;
+            document.getElementById('detected-supplier-title').innerText = `المنتجات المستخرجة (${detectedSupplier}) - قابلة للتعديل:`;
             renderOcrRows();
         }
 
@@ -940,7 +932,7 @@
             });
             saveData();
             closeModal('ocrModal');
-            alert("تم تحديث المخزون وإضافة المنتجات الجديدة بنجاح!");
+            alert("تم إدخال المنتجات بنجاح إلى المخزون!");
         }
 
         function populateProductSelect() {
