@@ -337,31 +337,31 @@
         </div>
     </div>
 
-    <!-- MODAL: DIRECT OCR INVOICE SCANNER -->
+    <!-- MODAL: SMART OCR INVOICE SCANNER -->
     <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Scan Facture IA (Extraction Directe)</h3>
+                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Scan Facture IA (Filtré & Intelligent)</h3>
                 <button onclick="closeModal('ocrModal')" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
                 <div class="border-2 border-dashed border-emerald-400 rounded-xl p-6 text-center hover:border-emerald-600 transition cursor-pointer bg-emerald-50/50 relative" onclick="document.getElementById('invoice-file').click()">
-                    <input type="file" id="invoice-file" accept="image/*" class="hidden" onchange="handleDirectOCR(event)">
+                    <input type="file" id="invoice-file" accept="image/*" class="hidden" onchange="handleSmartOCR(event)">
                     <i class="fa-solid fa-cloud-arrow-up text-4xl text-emerald-600 mb-2"></i>
-                    <p class="text-sm font-medium text-slate-700">Prendre une photo ou importer n'importe quelle facture</p>
-                    <p class="text-xs text-slate-500 mt-1">Extraction automatique des références, produits, quantités et prix</p>
+                    <p class="text-sm font-medium text-slate-700">Prendre une photo ou importer une facture</p>
+                    <p class="text-xs text-slate-500 mt-1">Extraction automatique des produits (les en-têtes et totaux sont ignorés)</p>
                 </div>
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
                     <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>
-                    <span class="text-sm text-blue-800" id="ocr-status-text">Analyse intelligente du document en cours...</span>
+                    <span class="text-sm text-blue-800" id="ocr-status-text">Filtrage et analyse de la facture en cours...</span>
                 </div>
 
                 <div id="ocr-results" class="hidden space-y-3">
                     <div class="flex justify-between items-center">
-                        <h4 class="font-semibold text-sm text-slate-800">Articles extraits de la facture :</h4>
+                        <h4 class="font-semibold text-sm text-slate-800">Articles extraits (filtrés) :</h4>
                         <div class="text-xs text-slate-500">
-                            <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check-circle"></i> Extraction réussie</span>
+                            <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check-circle"></i> Prêt pour l'injection</span>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -789,20 +789,20 @@
             });
         }
 
-        // --- DIRECT ENGINE FOR INVOICE PARSING (NO CORS ISSUES) ---
-        async function handleDirectOCR(e) {
+        // --- SMART FILTERED OCR ENGINE ---
+        async function handleSmartOCR(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('ocr-status').classList.remove('hidden');
             document.getElementById('ocr-results').classList.add('hidden');
-            document.getElementById('ocr-status-text').innerText = "Lecture et analyse de la facture en cours...";
+            document.getElementById('ocr-status-text').innerText = "Analyse et filtrage intelligent des articles...";
 
             try {
                 const result = await Tesseract.recognize(file, 'fra+eng', {
                     logger: m => {
                         if(m.status === 'recognizing text') {
-                            document.getElementById('ocr-status-text').innerText = `Analyse du document : ${Math.round(m.progress * 100)}%`;
+                            document.getElementById('ocr-status-text').innerText = `Analyse en cours : ${Math.round(m.progress * 100)}%`;
                         }
                     }
                 });
@@ -813,23 +813,30 @@
 
                 currentOcrItems = [];
                 
+                // قائمة الكلمات المستبعدة (عناوين، تواريخ، مجاميع، ضرائب، وسائط)
+                const ignoredWords = ['date', 'siret', 'address', 'anywhere', 'total', 'tva', 'sous', 'paiement', 'penalites', 'compte', 'facture', 'client', 'http', 'www', 'net', 'remise'];
+
                 lines.forEach((line, idx) => {
                     const cleanLine = line.trim();
-                    if(cleanLine.length > 5) {
-                        // البحث عن الأرقام والأثمنة داخل السطر
+                    const lowerLine = cleanLine.toLowerCase();
+
+                    // التحقق مما إذا كان السطر يحتوي على كلمات غير مرغوب فيها
+                    const isIgnored = ignoredWords.some(word => lowerLine.includes(word));
+
+                    if(cleanLine.length > 3 && !isIgnored) {
                         const numbers = cleanLine.match(/\d+[\.,]?\d*/g);
                         if(numbers && numbers.length >= 1) {
                             const possiblePrice = parseFloat(numbers[numbers.length - 1].replace(',', '.'));
                             const possibleQty = numbers.length >= 2 ? parseFloat(numbers[numbers.length - 2].replace(',', '.')) : 1;
                             
-                            // تنظيف الاسم وإبعاد الأرقام
-                            const nameText = cleanLine.replace(/\d+[\.,]?\d*/g, '').trim();
+                            const nameText = cleanLine.replace(/\d+[\.,]?\d*/g, '').replace(/[€$£%]/g, '').trim();
                             
-                            if(nameText.length > 2 && possiblePrice > 0) {
+                            // قبول فقط الأسطر التي تمثل منتجات حقيقية بأسعار معقولة
+                            if(nameText.length > 2 && possiblePrice > 0 && possiblePrice < 100000) {
                                 currentOcrItems.push({
-                                    sku: `REF-${idx + 1}`,
+                                    sku: `PROD-${currentOcrItems.length + 1}`,
                                     name: nameText,
-                                    qty: possibleQty > 0 && possibleQty < 1000 ? possibleQty : 1,
+                                    qty: possibleQty > 0 && possibleQty < 100 ? possibleQty : 1,
                                     rawPrice: possiblePrice
                                 });
                             }
@@ -838,7 +845,7 @@
                 });
 
                 if(currentOcrItems.length === 0) {
-                    currentOcrItems.push({ sku: 'REF-01', name: 'Produit Détecté', qty: 1, rawPrice: 0.00 });
+                    currentOcrItems.push({ sku: 'REF-01', name: 'Article de facture', qty: 1, rawPrice: 0.00 });
                 }
 
                 document.getElementById('ocr-results').classList.remove('hidden');
@@ -847,7 +854,7 @@
 
             } catch (err) {
                 console.error(err);
-                alert("Erreur lors de la lecture du document. Veuillez réessayer avec une image claire.");
+                alert("Erreur lors de l'analyse. Veuillez réessayer avec une image claire.");
                 document.getElementById('ocr-status').classList.add('hidden');
             }
         }
@@ -897,7 +904,7 @@
             });
             saveData();
             closeModal('ocrModal');
-            alert("Stock mis à jour avec succès !");
+            alert("Stock mis à jour avec succès (Articles filtrés) !");
         }
 
         function populateProductSelect() {
@@ -1052,3 +1059,4 @@
     </script>
 </body>
 </html>
+I
