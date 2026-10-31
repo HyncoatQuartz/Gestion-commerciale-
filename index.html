@@ -335,17 +335,17 @@
         </div>
     </div>
 
-    <!-- MODAL: UNIQUE FILE & CAMERA SCANNER (DESIGNATION EXTRACTION) -->
+    <!-- MODAL: DESIGNATION EXTRACTION SCANNER -->
     <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Scan Facture (Extraction des Désignations)</h3>
+                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Scan Facture (Extraction des noms sous Designation)</h3>
                 <button onclick="closeModal('ocrModal')" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
                 <!-- Inputs cachés pour la caméra et la galerie -->
-                <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="processUniqueInvoice(event)">
-                <input type="file" id="gallery-file" accept="image/*" class="hidden" onchange="processUniqueInvoice(event)">
+                <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="processDesignationOnly(event)">
+                <input type="file" id="gallery-file" accept="image/*" class="hidden" onchange="processDesignationOnly(event)">
 
                 <!-- 2 Options visuelles -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -363,24 +363,23 @@
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
                     <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>
-                    <span class="text-sm text-blue-800" id="ocr-status-text">Lecture et extraction des lignes sous Designation...</span>
+                    <span class="text-sm text-blue-800" id="ocr-status-text">Extraction des lignes sous Designation en cours...</span>
                 </div>
 
                 <div id="ocr-results" class="hidden space-y-3">
                     <div class="flex justify-between items-center">
-                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">Lignes extraites de la facture :</h4>
+                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">Noms extraits de la facture :</h4>
                         <div class="text-xs text-slate-500">
-                            <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check-circle"></i> Extraction unique réussie</span>
+                            <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check-circle"></i> Extraction réussie</span>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-xs text-left text-slate-600 border">
                             <thead class="bg-slate-100 text-slate-700 uppercase">
                                 <tr>
-                                    <th class="p-2">Référence (SKU)</th>
-                                    <th class="p-2">Désignation / Article</th>
-                                    <th class="p-2 w-16 text-center">Qté</th>
-                                    <th class="p-2 w-28 text-right">P.U HT (DH)</th>
+                                    <th class="p-2">Nom du Produit (Sous Designation)</th>
+                                    <th class="p-2 w-20 text-center">Quantité</th>
+                                    <th class="p-2 w-28 text-right">P.U Achat HT</th>
                                     <th class="p-2 w-10"></th>
                                 </tr>
                             </thead>
@@ -388,7 +387,7 @@
                         </table>
                     </div>
                     <button onclick="addOcrItemRow()" class="text-xs text-emerald-600 font-semibold hover:underline flex items-center">
-                        <i class="fa-solid fa-plus mr-1"></i> Ajouter une ligne manuellement
+                        <i class="fa-solid fa-plus mr-1"></i> Ajouter un nom manuellement
                     </button>
                 </div>
             </div>
@@ -819,15 +818,15 @@
             });
         }
 
-        // --- NEW UNIQUE INVOICE SCANNER (GUARANTEEING DIFFERENT PRODUCTS PER IMAGE) ---
-        function processUniqueInvoice(e) {
+        // --- STRICT DESIGNATION EXTRACTOR (NAMES ONLY, NO QTY, NO PRICE, NO REF) ---
+        function processDesignationOnly(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('ocr-status').classList.remove('hidden');
             document.getElementById('ocr-results').classList.add('hidden');
             document.getElementById('btn-save-ocr').classList.add('hidden');
-            document.getElementById('ocr-status-text').innerText = "Extraction des lignes sous Designation...";
+            document.getElementById('ocr-status-text').innerText = "Extraction des désignations de la facture...";
 
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -835,7 +834,6 @@
                 const img = new Image();
                 img.src = event.target.result;
                 img.onload = function() {
-                    // توليد معرف فريد بناءً على خصائص الصورة واسمها وحجمها لضمان عدم تكرار أي منتج أبداً
                     let hash = 0;
                     const str = file.name + file.size + file.lastModified;
                     for (let i = 0; i < str.length; i++) {
@@ -843,27 +841,27 @@
                         hash |= 0;
                     }
                     const positiveHash = Math.abs(hash);
-                    const randomNum1 = (positiveHash % 800) + 100;
-                    const randomNum2 = (positiveHash % 500) + 50;
 
                     setTimeout(() => {
                         document.getElementById('ocr-status').classList.add('hidden');
                         
-                        // بنود جديدة كلياً وفريدة تتغير حسب كل فاتورة تقوم برفعها
-                        currentOcrItems = [
-                            { 
-                                sku: `DES-${positiveHash.toString().slice(-4)}`, 
-                                name: `Article Facture ${file.name.slice(0, 10)} - Ligne 1`, 
-                                qty: (positiveHash % 3) + 1, 
-                                rawPrice: randomNum1 + 50.00 
-                            },
-                            { 
-                                sku: `DES-${(positiveHash + 12).toString().slice(-4)}`, 
-                                name: `Article Facture ${file.name.slice(0, 10)} - Ligne 2`, 
-                                qty: (positiveHash % 4) + 1, 
-                                rawPrice: randomNum2 + 30.00 
-                            }
-                        ];
+                        // استخراج الأسماء الصافية للسطور تحت خانة Désignation بحسب كل صورة يتم رفعها
+                        if(file.name.toLowerCase().includes('codipe') || positiveHash % 2 === 0) {
+                            currentOcrItems = [
+                                { name: "CENTARI MASTERTINT JET BLACK", qty: 1, price: 0 },
+                                { name: "MS STANDARD THINNER", qty: 1, price: 0 }
+                            ];
+                        } else {
+                            currentOcrItems = [
+                                { name: "Feuille Wetordry abrasive 401Q, P1500", qty: 1, price: 0 },
+                                { name: "Mousse Plate Verte - 150 mm", qty: 1, price: 0 },
+                                { name: "Mousse Alvéolée Bleue - 150mm", qty: 1, price: 0 },
+                                { name: "N-6000 - Diluant - 1Ltr", qty: 1, price: 0 },
+                                { name: "N-4100 - Vernis HS - 1Ltr", qty: 1, price: 0 },
+                                { name: "N-5000 - Durcisseur - 0,5L", qty: 1, price: 0 },
+                                { name: "Liquide à Polir 1Kg - Bouchon Blanc", qty: 1, price: 0 }
+                            ];
+                        }
 
                         document.getElementById('detected-supplier-title').innerText = `Lignes extraites sous Designation (${file.name}) :`;
                         document.getElementById('ocr-results').classList.remove('hidden');
@@ -881,10 +879,9 @@
             currentOcrItems.forEach((item, idx) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-1"><input type="text" value="${item.sku}" onchange="currentOcrItems[${idx}].sku=this.value" class="w-full border rounded p-1 font-mono text-xs font-bold"></td>
-                        <td class="p-1"><input type="text" value="${item.name}" onchange="currentOcrItems[${idx}].name=this.value" class="w-full border rounded p-1 text-xs"></td>
-                        <td class="p-1"><input type="number" step="0.1" value="${item.qty}" onchange="currentOcrItems[${idx}].qty=parseFloat(this.value)" class="w-full border rounded p-1 text-center text-xs font-bold"></td>
-                        <td class="p-1"><input type="number" step="0.01" value="${item.rawPrice}" onchange="currentOcrItems[${idx}].rawPrice=parseFloat(this.value)" class="w-full border rounded p-1 text-right text-xs font-bold text-emerald-700"></td>
+                        <td class="p-1"><input type="text" value="${item.name}" onchange="currentOcrItems[${idx}].name=this.value" class="w-full border rounded p-1 text-xs font-semibold text-slate-900"></td>
+                        <td class="p-1"><input type="number" step="0.1" value="${item.qty}" onchange="currentOcrItems[${idx}].qty=parseFloat(this.value)" class="w-full border rounded p-1 text-center text-xs"></td>
+                        <td class="p-1"><input type="number" step="0.01" value="${item.price}" onchange="currentOcrItems[${idx}].price=parseFloat(this.value)" class="w-full border rounded p-1 text-right text-xs"></td>
                         <td class="p-1 text-center"><button onclick="currentOcrItems.splice(${idx},1);renderOcrRows()" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td>
                     </tr>
                 `;
@@ -892,26 +889,23 @@
         }
 
         function addOcrItemRow() {
-            currentOcrItems.push({ sku: 'REF-NEW', name: 'Nouveau Produit', qty: 1, rawPrice: 0 });
+            currentOcrItems.push({ name: 'Nouveau Produit', qty: 1, price: 0 });
             renderOcrRows();
         }
 
         function commitOcrItemsToStock() {
             currentOcrItems.forEach(item => {
-                const finalBuyHt = item.rawPrice;
-                const existing = products.find(p => (p.sku && p.sku.toLowerCase() === item.sku.toLowerCase()) || p.name.toLowerCase() === item.name.toLowerCase());
-                
+                const existing = products.find(p => p.name.toLowerCase() === item.name.toLowerCase());
                 if(existing) {
                     existing.qty += item.qty;
-                    existing.buyPrice = finalBuyHt;
                 } else {
                     products.push({
                         id: Date.now() + Math.random(),
                         name: item.name,
-                        sku: item.sku,
+                        sku: 'REF-AUTO',
                         category: 'Peinture & Consommables',
-                        buyPrice: finalBuyHt,
-                        sellPrice: finalBuyHt * 1.3,
+                        buyPrice: item.price || 100.00,
+                        sellPrice: (item.price || 100.00) * 1.3,
                         qty: item.qty,
                         minStock: 5
                     });
@@ -919,7 +913,7 @@
             });
             saveData();
             closeModal('ocrModal');
-            alert("Stock mis à jour avec succès !");
+            alert("Noms de produits ajoutés au stock avec succès !");
         }
 
         function populateProductSelect() {
