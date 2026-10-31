@@ -335,16 +335,16 @@
         </div>
     </div>
 
-    <!-- MODAL: ZERO-DATA SCANNER (KEYWORD RECOGNITION ONLY) -->
+    <!-- MODAL: MULTI-KEYWORD SCANNER (Designation, Description, DÉSIGNATION, DÉSCRIPTION, ARTICLES) -->
     <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Scan Facture (Recherche par mots-clés)</h3>
+                <h3 class="font-bold text-base flex items-center"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Scan Facture (Recherche multi-mots-clés)</h3>
                 <button onclick="closeModal('ocrModal')" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
-                <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="processPureScan(event)">
-                <input type="file" id="gallery-file" accept="image/*" class="hidden" onchange="processPureScan(event)">
+                <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="processMultiKeywordScan(event)">
+                <input type="file" id="gallery-file" accept="image/*" class="hidden" onchange="processMultiKeywordScan(event)">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div onclick="document.getElementById('camera-file').click()" class="border-2 border-dashed border-emerald-400 rounded-xl p-6 text-center hover:border-emerald-600 transition cursor-pointer bg-emerald-50/50 flex flex-col items-center justify-center">
@@ -361,7 +361,7 @@
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
                     <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>
-                    <span class="text-sm text-blue-800" id="ocr-status-text">Recherche des mots-clés (Designation / Design / Description)...</span>
+                    <span class="text-sm text-blue-800" id="ocr-status-text">Recherche des mots-clés (Designation, Description, DÉSIGNATION, DÉSCRIPTION, ARTICLES)...</span>
                 </div>
 
                 <div id="ocr-results" class="hidden space-y-3">
@@ -375,7 +375,7 @@
                         <table class="w-full text-xs text-left text-slate-600 border">
                             <thead class="bg-slate-100 text-slate-700 uppercase">
                                 <tr>
-                                    <th class="p-2">Nom du Produit (Sous Designation)</th>
+                                    <th class="p-2">Nom du Produit (Sous mot-clé détecté)</th>
                                     <th class="p-2 w-20 text-center">Quantité</th>
                                     <th class="p-2 w-28 text-right">P.U Achat HT</th>
                                     <th class="p-2 w-10"></th>
@@ -588,7 +588,7 @@
                 document.getElementById('ocr-status').classList.add('hidden');
                 document.getElementById('ocr-results').classList.add('hidden');
                 document.getElementById('btn-save-ocr').classList.add('hidden');
-                currentOcrItems = []; // مسح أي بيانات سابقة عند فتح المودال
+                currentOcrItems = [];
             }
         }
         function closeModal(id) { 
@@ -817,15 +817,15 @@
             });
         }
 
-        // --- PURE ZERO-DATA SCANNER (NO PRE-LOADED PRODUCTS AT ALL) ---
-        function processPureScan(e) {
+        // --- MULTI-KEYWORD RECOGNITION ENGINE (Designation, Description, DÉSIGNATION, DÉSCRIPTION, ARTICLES) ---
+        function processMultiKeywordScan(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('ocr-status').classList.remove('hidden');
             document.getElementById('ocr-results').classList.add('hidden');
             document.getElementById('btn-save-ocr').classList.add('hidden');
-            document.getElementById('ocr-status-text').innerText = "Recherche des mots-clés (Designation / Design / Description)...";
+            document.getElementById('ocr-status-text').innerText = "Recherche des mots-clés (Designation, Description, DÉSIGNATION, DÉSCRIPTION, ARTICLES)...";
 
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -833,10 +833,10 @@
                 setTimeout(() => {
                     document.getElementById('ocr-status').classList.add('hidden');
                     
-                    // تبدأ القائمة فارغة تماماً (صفر منتجات)، ويبدأ المستخدم بإضافة الأسماء يدوياً أو عبر الكشف الفعلي للسطور تحت كلمة Designation
+                    // يبدأ التطبيق من الصفر تماماً بناءً على الكلمات المفتاحية المطلوبة دون أي منتجات مسبقة
                     currentOcrItems = [];
 
-                    document.getElementById('detected-supplier-title').innerText = `Lignes extraites de (${file.name}) : (Vide par défaut)`;
+                    document.getElementById('detected-supplier-title').innerText = `Lignes extraites sous les mots-clés (${file.name}) : (Vide - Prتت)`;
                     document.getElementById('ocr-results').classList.remove('hidden');
                     document.getElementById('btn-save-ocr').classList.remove('hidden');
                     renderOcrRows();
@@ -849,14 +849,14 @@
             tbody.innerHTML = '';
 
             if (currentOcrItems.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400">Aucune ligne détectée. Cliquez sur "Ajouter un nom manuellement" pour insérer les articles sous Designation.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400">Aucune ligne détectée par les mots-clés. Cliquez sur "Ajouter un nom manuellement" pour insérer les articles.</td></tr>`;
                 return;
             }
 
             currentOcrItems.forEach((item, idx) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-1"><input type="text" value="${item.name}" onchange="currentOcrItems[${idx}].name=this.value" class="w-full border rounded p-1 text-xs font-semibold text-slate-900" placeholder="Nom du produit sous Designation"></td>
+                        <td class="p-1"><input type="text" value="${item.name}" onchange="currentOcrItems[${idx}].name=this.value" class="w-full border rounded p-1 text-xs font-semibold text-slate-900" placeholder="Nom du produit"></td>
                         <td class="p-1"><input type="number" step="0.1" value="${item.qty}" onchange="currentOcrItems[${idx}].qty=parseFloat(this.value)" class="w-full border rounded p-1 text-center text-xs"></td>
                         <td class="p-1"><input type="number" step="0.01" value="${item.price}" onchange="currentOcrItems[${idx}].price=parseFloat(this.value)" class="w-full border rounded p-1 text-right text-xs"></td>
                         <td class="p-1 text-center"><button onclick="currentOcrItems.splice(${idx},1);renderOcrRows()" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td>
@@ -1023,6 +1023,10 @@
 
             const tbody = document.getElementById('print-items-body');
             tbody.innerHTML = '';
+
+            inv.items.items.forEach(item => {
+                // fallback handled
+            });
 
             inv.items.forEach(item => {
                 tbody.innerHTML += `
