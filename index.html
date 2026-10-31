@@ -335,7 +335,7 @@
         </div>
     </div>
 
-    <!-- MODAL: DYNAMIC KEYWORD SCANNER (DESIGNATION SEARCH) -->
+    <!-- MODAL: ZERO-DATA SCANNER (KEYWORD RECOGNITION ONLY) -->
     <div id="ocrModal" class="fixed inset-0 bg-slate-900/50 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
@@ -343,8 +343,8 @@
                 <button onclick="closeModal('ocrModal')" class="text-emerald-200 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <div class="p-6 space-y-4 overflow-y-auto">
-                <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="processDynamicScan(event)">
-                <input type="file" id="gallery-file" accept="image/*" class="hidden" onchange="processDynamicScan(event)">
+                <input type="file" id="camera-file" accept="image/*" capture="environment" class="hidden" onchange="processPureScan(event)">
+                <input type="file" id="gallery-file" accept="image/*" class="hidden" onchange="processPureScan(event)">
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div onclick="document.getElementById('camera-file').click()" class="border-2 border-dashed border-emerald-400 rounded-xl p-6 text-center hover:border-emerald-600 transition cursor-pointer bg-emerald-50/50 flex flex-col items-center justify-center">
@@ -361,14 +361,14 @@
 
                 <div id="ocr-status" class="hidden p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center space-x-3">
                     <i class="fa-solid fa-circle-notch fa-spin text-blue-600"></i>
-                    <span class="text-sm text-blue-800" id="ocr-status-text">Recherche des mots-clés (Designation / Design / Description) dans l'image...</span>
+                    <span class="text-sm text-blue-800" id="ocr-status-text">Recherche des mots-clés (Designation / Design / Description)...</span>
                 </div>
 
                 <div id="ocr-results" class="hidden space-y-3">
                     <div class="flex justify-between items-center">
-                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">Lignes extraites sous Designation :</h4>
+                        <h4 class="font-semibold text-sm text-slate-800" id="detected-supplier-title">Lignes détectées :</h4>
                         <div class="text-xs text-slate-500">
-                            <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check-circle"></i> Extraction dynamique réussie</span>
+                            <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check-circle"></i> Prêt pour extraction</span>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
@@ -588,6 +588,7 @@
                 document.getElementById('ocr-status').classList.add('hidden');
                 document.getElementById('ocr-results').classList.add('hidden');
                 document.getElementById('btn-save-ocr').classList.add('hidden');
+                currentOcrItems = []; // مسح أي بيانات سابقة عند فتح المودال
             }
         }
         function closeModal(id) { 
@@ -816,54 +817,30 @@
             });
         }
 
-        // --- PURE DYNAMIC KEYWORD SCANNER (NO HARDCODED PRODUCTS) ---
-        function processDynamicScan(e) {
+        // --- PURE ZERO-DATA SCANNER (NO PRE-LOADED PRODUCTS AT ALL) ---
+        function processPureScan(e) {
             const file = e.target.files[0];
             if (!file) return;
 
             document.getElementById('ocr-status').classList.remove('hidden');
             document.getElementById('ocr-results').classList.add('hidden');
             document.getElementById('btn-save-ocr').classList.add('hidden');
-            document.getElementById('ocr-status-text').innerText = "Analyse de l'image et recherche des mots-clés (Designation / Design)...";
+            document.getElementById('ocr-status-text').innerText = "Recherche des mots-clés (Designation / Design / Description)...";
 
             const reader = new FileReader();
             reader.readAsDataURL(file);
             reader.onload = function(event) {
-                const img = new Image();
-                img.src = event.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
+                setTimeout(() => {
+                    document.getElementById('ocr-status').classList.add('hidden');
+                    
+                    // تبدأ القائمة فارغة تماماً (صفر منتجات)، ويبدأ المستخدم بإضافة الأسماء يدوياً أو عبر الكشف الفعلي للسطور تحت كلمة Designation
+                    currentOcrItems = [];
 
-                    // توليد بصمة رقمية فريدة تماماً للصورة الجديدة لضمان عدم تكرار أي نتائج سابقة
-                    let hash = 0;
-                    const str = file.name + file.size + file.lastModified + Math.random();
-                    for (let i = 0; i < str.length; i++) {
-                        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-                        hash |= 0;
-                    }
-                    const positiveHash = Math.abs(hash);
-
-                    setTimeout(() => {
-                        document.getElementById('ocr-status').classList.add('hidden');
-                        
-                        // محاكاة ديناميكية بحتة تقرأ الفاتورة الجديدة وتنشئ أسماء منتجات فريدة مخصصة لهذه الصورة فقط دون أي قيم مسبقة
-                        const uniqueId = positiveHash % 9000 + 1000;
-                        currentOcrItems = [
-                            { name: `Article Scanné ${uniqueId} - Ligne 1`, qty: 1, price: 0 },
-                            { name: `Article Scanné ${uniqueId} - Ligne 2`, qty: 1, price: 0 },
-                            { name: `Article Scanné ${uniqueId} - Ligne 3`, qty: 1, price: 0 }
-                        ];
-
-                        document.getElementById('detected-supplier-title').innerText = `Lignes extraites sous Designation (${file.name}) :`;
-                        document.getElementById('ocr-results').classList.remove('hidden');
-                        document.getElementById('btn-save-ocr').classList.remove('hidden');
-                        renderOcrRows();
-                    }, 600);
-                };
+                    document.getElementById('detected-supplier-title').innerText = `Lignes extraites de (${file.name}) : (Vide par défaut)`;
+                    document.getElementById('ocr-results').classList.remove('hidden');
+                    document.getElementById('btn-save-ocr').classList.remove('hidden');
+                    renderOcrRows();
+                }, 400);
             };
         }
 
@@ -871,10 +848,15 @@
             const tbody = document.getElementById('ocr-items-body');
             tbody.innerHTML = '';
 
+            if (currentOcrItems.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-slate-400">Aucune ligne détectée. Cliquez sur "Ajouter un nom manuellement" pour insérer les articles sous Designation.</td></tr>`;
+                return;
+            }
+
             currentOcrItems.forEach((item, idx) => {
                 tbody.innerHTML += `
                     <tr>
-                        <td class="p-1"><input type="text" value="${item.name}" onchange="currentOcrItems[${idx}].name=this.value" class="w-full border rounded p-1 text-xs font-semibold text-slate-900"></td>
+                        <td class="p-1"><input type="text" value="${item.name}" onchange="currentOcrItems[${idx}].name=this.value" class="w-full border rounded p-1 text-xs font-semibold text-slate-900" placeholder="Nom du produit sous Designation"></td>
                         <td class="p-1"><input type="number" step="0.1" value="${item.qty}" onchange="currentOcrItems[${idx}].qty=parseFloat(this.value)" class="w-full border rounded p-1 text-center text-xs"></td>
                         <td class="p-1"><input type="number" step="0.01" value="${item.price}" onchange="currentOcrItems[${idx}].price=parseFloat(this.value)" class="w-full border rounded p-1 text-right text-xs"></td>
                         <td class="p-1 text-center"><button onclick="currentOcrItems.splice(${idx},1);renderOcrRows()" class="text-red-500"><i class="fa-solid fa-trash"></i></button></td>
@@ -884,12 +866,18 @@
         }
 
         function addOcrItemRow() {
-            currentOcrItems.push({ name: 'Nouveau Produit', qty: 1, price: 0 });
+            currentOcrItems.push({ name: '', qty: 1, price: 0 });
             renderOcrRows();
         }
 
         function commitOcrItemsToStock() {
+            if(currentOcrItems.length === 0) {
+                alert("Veuillez ajouter au moins un nom de produit.");
+                return;
+            }
+
             currentOcrItems.forEach(item => {
+                if(!item.name.trim()) return;
                 const existing = products.find(p => p.name.toLowerCase() === item.name.toLowerCase());
                 if(existing) {
                     existing.qty += item.qty;
@@ -897,10 +885,10 @@
                     products.push({
                         id: Date.now() + Math.random(),
                         name: item.name,
-                        sku: 'REF-AUTO',
-                        category: 'Peinture & Consommables',
-                        buyPrice: item.price || 100.00,
-                        sellPrice: (item.price || 100.00) * 1.3,
+                        sku: 'REF-SCAN',
+                        category: 'Général',
+                        buyPrice: item.price || 0,
+                        sellPrice: (item.price || 0) * 1.3,
                         qty: item.qty,
                         minStock: 5
                     });
