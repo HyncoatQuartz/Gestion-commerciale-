@@ -1,330 +1,680 @@
-```html
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-50">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hsabati - Logiciel de Facturation et Gestion d'Entreprise</title>
-    <!-- Tailwind CSS -->
+    <title>Hsabati Pro - Gestion & Facturation</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
-                        },
-                        navy: {
-                            800: '#1e293b',
-                            900: '#0f172a'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts & FontAwesome -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-        
         @media print {
             .no-print { display: none !important; }
-            .print-only { display: block !important; }
-            body { background: white; font-size: 12pt; }
-            #printable-invoice { border: none !important; box-shadow: none !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            body { background: white !important; }
+            .print-area { box-shadow: none !important; border: none !important; }
         }
     </style>
 </head>
-<body class="h-full text-slate-800 flex flex-col md:flex-row overflow-hidden antialiased">
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-    <!-- SIDEBAR -->
-    <aside class="w-full md:w-64 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col no-print z-20">
-        <!-- Logo & Brand -->
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+    <!-- Top Navigation Bar -->
+    <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-900/50">
-                    H
+                <div class="bg-white text-indigo-700 p-2 rounded-xl font-bold text-xl shadow">
+                    <i class="fa-solid fa-calculator"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-white tracking-wide text-lg leading-tight">Hsabati <span class="text-xs px-1.5 py-0.5 bg-brand-500/20 text-brand-400 rounded border border-brand-500/30">PRO</span></h1>
-                    <p class="text-xs text-slate-400">Gestion & Facturation</p>
+                    <h1 class="text-xl font-bold tracking-tight">Hsabati <span class="text-indigo-200 text-sm font-normal">Pro Maroc</span></h1>
+                    <p class="text-xs text-indigo-200">Facturation, Stock & Trésorerie</p>
                 </div>
             </div>
-            <button id="mobile-menu-btn" class="md:hidden text-slate-400 hover:text-white">
-                <i class="fas fa-bars text-xl"></i>
-            </button>
-        </div>
-
-        <!-- Navigation -->
-        <nav id="sidebar-nav" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto hidden md:block">
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mb-2">Principal</div>
-            
-            <a href="#" onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-white bg-brand-600 shadow-md transition-all">
-                <i class="fas fa-chart-pie w-6 text-center text-lg mr-2"></i>
-                Tableau de bord
-            </a>
-
-            <a href="#" onclick="switchTab('invoices')" id="nav-invoices" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                <i class="fas fa-file-invoice-dollar w-6 text-center text-lg mr-2"></i>
-                Factures & Devis
-            </a>
-
-            <a href="#" onclick="switchTab('stock')" id="nav-stock" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                <i class="fas fa-boxes-stacked w-6 text-center text-lg mr-2"></i>
-                Stock & Produits
-            </a>
-
-            <a href="#" onclick="switchTab('contacts')" id="nav-contacts" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                <i class="fas fa-users-gears w-6 text-center text-lg mr-2"></i>
-                Clients & Créances
-            </a>
-
-            <a href="#" onclick="switchTab('expenses')" id="nav-expenses" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                <i class="fas fa-receipt w-6 text-center text-lg mr-2"></i>
-                Dépenses & Charges
-            </a>
-
-            <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 mt-6 mb-2">Outils & OCR</div>
-
-            <a href="#" onclick="switchTab('reports')" id="nav-reports" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-all">
-                <i class="fas fa-chart-line w-6 text-center text-lg mr-2"></i>
-                Déclaration TVA (20%)
-            </a>
-
-            <a href="#" onclick="openOcrModal()" class="nav-item flex items-center px-3 py-2.5 text-sm font-medium rounded-lg text-amber-400 hover:bg-amber-400/10 transition-all border border-amber-400/20 my-2">
-                <i class="fas fa-wand-magic-sparkles w-6 text-center text-lg mr-2"></i>
-                Scanner OCR Facture
-            </a>
-        </nav>
-
-        <!-- Company Footer -->
-        <div class="p-3 bg-slate-950/60 border-t border-slate-800 m-2 rounded-xl text-xs space-y-1">
-            <div class="font-semibold text-slate-200 flex items-center justify-between">
-                <span class="truncate">HYNCOAT QUARTZ SARL</span>
-                <i class="fas fa-building text-brand-500"></i>
-            </div>
-            <div class="text-slate-400">ICE: <span>002849182000045</span></div>
-            <div class="text-slate-500 text-[10px]">TVA: 20% (Conforme Maroc)</div>
-        </div>
-    </aside>
-
-    <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100">
-
-        <!-- HEADER -->
-        <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between no-print z-10 shadow-sm">
-            <div class="flex items-center gap-4">
-                <div class="relative hidden sm:block">
-                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                    <input type="text" placeholder="Rechercher facture, client, article..." class="pl-9 pr-4 py-1.5 text-sm bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 w-64 md:w-80">
-                </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-                <button onclick="openInvoiceModal('FACTURE')" class="bg-brand-600 hover:bg-brand-700 text-white px-3.5 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-2 shadow-sm transition">
-                    <i class="fas fa-plus"></i>
-                    <span>Nouvelle Facture</span>
+            <div class="flex items-center space-x-4">
+                <span id="current-company" class="hidden md:inline-block text-xs bg-indigo-800 px-3 py-1 rounded-full text-indigo-100 font-medium border border-indigo-600">
+                    HYNCOAT QUARTZ sarlau
+                </span>
+                <button onclick="exportData()" title="Sauvegarder les données" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center space-x-1 shadow-sm">
+                    <i class="fa-solid fa-download text-xs"></i> <span>Exporter</span>
                 </button>
-
-                <div class="flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 border border-slate-200 rounded-lg text-xs font-medium text-slate-600">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                    <span>MA - MAD (DH)</span>
-                </div>
             </div>
-        </header>
+        </div>
+    </header>
 
-        <!-- VIEWPORT CONTENT -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-6 no-print" id="content-area">
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 md:grid-cols-5 gap-6">
+
+        <!-- Sidebar Navigation -->
+        <aside class="md:col-span-1 no-print">
+            <nav class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 space-y-1 sticky top-20">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-indigo-700 bg-indigo-50">
+                    <i class="fa-solid fa-chart-pie w-5"></i>
+                    <span>Tableau de bord</span>
+                </button>
+                <button onclick="switchTab('invoices')" id="nav-invoices" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-file-invoice-dollar w-5"></i>
+                    <span>Factures & Devis</span>
+                </button>
+                <button onclick="switchTab('stock')" id="nav-stock" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-boxes-stacked w-5"></i>
+                    <span>Gestion Stock</span>
+                </button>
+                <button onclick="switchTab('clients')" id="nav-clients" class="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900">
+                    <i class="fa-solid fa-users w-5"></i>
+                    <span>Clients & Fournisseurs</span>
+                </button>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="md:col-span-4 space-y-6">
 
             <!-- TAB 1: DASHBOARD -->
             <section id="tab-dashboard" class="space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-800">Tableau de Bord</h2>
-                        <p class="text-sm text-slate-500">Vue globale des performances financières et opérationnelles.</p>
-                    </div>
-                    <button onclick="resetDataToDemo()" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg transition flex items-center gap-1 self-start sm:self-auto">
-                        <i class="fas fa-rotate"></i> Recharger Données Démo
-                    </button>
-                </div>
-
                 <!-- KPI Cards -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                        <p class="text-[11px] font-semibold text-slate-400 uppercase">Chiffre d'Affaires (TTC)</p>
-                        <h3 class="text-xl font-extrabold text-slate-900 mt-1" id="kpi-ca-ttc">0,00 DH</h3>
-                        <p class="text-[11px] text-emerald-600 font-medium mt-1">HT: <span id="kpi-ca-ht">0,00 DH</span></p>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500"></div>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                        <p class="text-[11px] font-semibold text-slate-400 uppercase">Total Dépenses</p>
-                        <h3 class="text-xl font-extrabold text-red-600 mt-1" id="kpi-expenses-total">0,00 DH</h3>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1">Charges d'exploitation</p>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-red-500"></div>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                        <p class="text-[11px] font-semibold text-slate-400 uppercase">Factures En Attente</p>
-                        <h3 class="text-xl font-extrabold text-amber-600 mt-1" id="kpi-pending-count">0</h3>
-                        <p class="text-[11px] text-amber-600 font-medium mt-1">Solde: <span id="kpi-pending-total">0,00 DH</span></p>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-amber-500"></div>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                        <p class="text-[11px] font-semibold text-slate-400 uppercase">TVA Collectée (20%)</p>
-                        <h3 class="text-xl font-extrabold text-blue-600 mt-1" id="kpi-tva-total">0,00 DH</h3>
-                        <p class="text-[11px] text-slate-500 font-medium mt-1">A déclarer au FISC</p>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-blue-500"></div>
-                    </div>
-
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
-                        <p class="text-[11px] font-semibold text-slate-400 uppercase">Total Devis Émis</p>
-                        <h3 class="text-xl font-extrabold text-indigo-600 mt-1" id="kpi-devis-count">0</h3>
-                        <p class="text-[11px] text-indigo-600 font-medium mt-1">Potentiel: <span id="kpi-devis-total">0,00 DH</span></p>
-                        <div class="absolute bottom-0 left-0 right-0 h-1 bg-indigo-500"></div>
-                    </div>
-                </div>
-
-                <!-- Charts & Stock Alerts -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                                <i class="fas fa-chart-area text-brand-600"></i> Suivi Financier & Évolution des Ventes
-                            </h3>
-                            <span class="text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded">Exercice En Cours</span>
-                        </div>
-                        <div class="h-64">
-                            <canvas id="salesChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                        <div>
-                            <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2">
-                                <i class="fas fa-triangle-exclamation text-amber-500"></i> Alertes Stock Critique
-                            </h3>
-                            <div class="space-y-3" id="dashboard-stock-alerts">
-                                <!-- Dynamic Low Stock -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Chiffre d'Affaires</p>
+                                <h3 id="kpi-ca" class="text-2xl font-bold text-slate-800 mt-1">0.00 <span class="text-xs font-normal text-slate-500">DH</span></h3>
+                            </div>
+                            <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
                             </div>
                         </div>
-                        <button onclick="switchTab('stock')" class="mt-4 text-xs font-semibold text-brand-600 hover:text-brand-700 text-center block">
-                            Accéder à la gestion du stock <i class="fas fa-arrow-right ml-1"></i>
-                        </button>
+                        <p class="text-xs text-emerald-600 mt-3 font-medium flex items-center gap-1"><i class="fa-solid fa-check"></i> TTC Encaissé</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Factures en attente</p>
+                                <h3 id="kpi-pending" class="text-2xl font-bold text-slate-800 mt-1">0.00 <span class="text-xs font-normal text-slate-500">DH</span></h3>
+                            </div>
+                            <div class="bg-amber-50 text-amber-600 p-3 rounded-xl">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-amber-600 mt-3 font-medium">Impayés clients</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Articles en Stock</p>
+                                <h3 id="kpi-stock-count" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                            </div>
+                            <div class="bg-blue-50 text-blue-600 p-3 rounded-xl">
+                                <i class="fa-solid fa-box"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-blue-600 mt-3 font-medium">Références actives</p>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">TVA Due (20%)</p>
+                                <h3 id="kpi-tva" class="text-2xl font-bold text-slate-800 mt-1">0.00 <span class="text-xs font-normal text-slate-500">DH</span></h3>
+                            </div>
+                            <div class="bg-indigo-50 text-indigo-600 p-3 rounded-xl">
+                                <i class="fa-solid fa-percent"></i>
+                            </div>
+                        </div>
+                        <p class="text-xs text-indigo-600 mt-3 font-medium">Estimation fiscale</p>
                     </div>
                 </div>
 
-                <!-- Recent Transactions -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fas fa-receipt text-slate-500"></i> Dernières Transactions & Factures
-                        </h3>
-                        <button onclick="switchTab('invoices')" class="text-xs font-semibold text-brand-600 hover:underline">Voir tout</button>
+                <!-- Chart & Quick Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 lg:col-span-2">
+                        <h3 class="text-base font-bold text-slate-800 mb-4">Aperçu de l'Activité</h3>
+                        <div class="h-64 flex items-center justify-center">
+                            <canvas id="activityChart"></canvas>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
-                                <tr>
-                                    <th class="p-3.5 px-4">N° Doc</th>
-                                    <th class="p-3.5 px-4">Client</th>
-                                    <th class="p-3.5 px-4">Date</th>
-                                    <th class="p-3.5 px-4 text-right">Montant TTC</th>
-                                    <th class="p-3.5 px-4 text-center">Statut</th>
-                                    <th class="p-3.5 px-4 text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dashboard-recent-invoices" class="divide-y divide-slate-100">
-                                <!-- Dynamic Rows -->
-                            </tbody>
-                        </table>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-800 mb-2">Actions Rapides</h3>
+                            <p class="text-xs text-slate-500 mb-4">Générez vos documents commerciaux en un clic.</p>
+                        </div>
+                        <div class="space-y-3">
+                            <button onclick="switchTab('invoices'); openNewInvoiceModal();" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-4 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2 shadow-sm">
+                                <i class="fa-solid fa-plus"></i>
+                                <span>Créer une Facture / Devis</span>
+                            </button>
+                            <button onclick="switchTab('stock');" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 py-3 px-4 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-box-open"></i>
+                                <span>Ajouter au Stock</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
 
             <!-- TAB 2: INVOICES & QUOTES -->
-            <section id="tab-invoices" class="space-y-6 hidden">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <section id="tab-invoices" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div>
-                        <h2 class="text-2xl font-bold text-slate-800">Factures & Devis</h2>
-                        <p class="text-sm text-slate-500">Établissez et gérez vos documents commerciaux conforme à la réglementation.</p>
+                        <h2 class="text-lg font-bold text-slate-800">Factures & Devis</h2>
+                        <p class="text-xs text-slate-500">Gérez vos documents conformes aux normes marocaines (ICE, IF, RC).</p>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <button onclick="openInvoiceModal('DEVIS')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
-                            <i class="fas fa-plus-circle"></i> Nouveau Devis
-                        </button>
-                        <button onclick="openInvoiceModal('FACTURE')" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition">
-                            <i class="fas fa-file-invoice"></i> Créer Facture
-                        </button>
-                    </div>
+                    <button onclick="openNewInvoiceModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center space-x-2 shadow-sm">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Nouveau Document</span>
+                    </button>
                 </div>
 
-                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-2 flex-1 min-w-[240px]">
-                        <div class="relative w-full">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                            <input type="text" id="invoice-search" onkeyup="filterInvoicesTable()" placeholder="Rechercher par N°, Client, ICE..." class="pl-9 pr-4 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-brand-500">
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <select id="invoice-filter-type" onchange="filterInvoicesTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2">
-                            <option value="ALL">Tous les types</option>
-                            <option value="FACTURE">Factures</option>
-                            <option value="DEVIS">Devis</option>
-                        </select>
-                        <select id="invoice-filter-status" onchange="filterInvoicesTable()" class="bg-slate-50 border border-slate-200 text-slate-700 text-sm rounded-lg p-2">
-                            <option value="ALL">Tous les statuts</option>
-                            <option value="PAYEE">Payée</option>
-                            <option value="EN_ATTENTE">En Attente</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-200">
-                                <tr>
-                                    <th class="p-4">Type & N°</th>
-                                    <th class="p-4">Client / Raison Sociale</th>
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                                    <th class="p-4">N° Doc</th>
+                                    <th class="p-4">Type</th>
+                                    <th class="p-4">Client</th>
                                     <th class="p-4">Date</th>
-                                    <th class="p-4 text-right">Total HT</th>
-                                    <th class="p-4 text-right">TVA (20%)</th>
-                                    <th class="p-4 text-right">Total TTC</th>
-                                    <th class="p-4 text-center">Statut</th>
-                                    <th class="p-4 text-center">Actions</th>
+                                    <th class="p-4">Total TTC</th>
+                                    <th class="p-4">Statut</th>
+                                    <th class="p-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="invoices-table-body" class="divide-y divide-slate-100">
-                                <!-- Dynamic Rows -->
+                                <!-- Populated dynamically -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB 3: STOCK & PRODUCTS -->
-            <section id="tab-stock" class="space-y-6 hidden">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- TAB 3: STOCK MANAGEMENT -->
+            <section id="tab-stock" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div>
-                        <h2 class="text-2xl font-
-```
+                        <h2 class="text-lg font-bold text-slate-800">Gestion du Stock & Articles</h2>
+                        <p class="text-xs text-slate-500">Suivi des prix unitaires HT/TTC (TVA 20%) et quantités.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="clearStockMemory()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center space-x-2 border border-rose-200">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Vider le Stock</span>
+                        </button>
+                        <button onclick="openAddProductModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center space-x-2 shadow-sm">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Ajouter Article</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- OCR / Import Simulation Box -->
+                <div class="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-indigo-900"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Import intelligent par Facture Fournisseur (OCR)</h4>
+                        <p class="text-xs text-indigo-700 mt-0.5">Glissez ou entrez les données, le système extrait les mots-clés (Designation, Description, Articles) et convertit les prix TTC en HT (TVA 20%).</p>
+                    </div>
+                    <button onclick="simulateOCRImport()" class="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition whitespace-nowrap">
+                        Simuler une Facture
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                                    <th class="p-4">Désignation / Article</th>
+                                    <th class="p-4">Prix Unit. HT</th>
+                                    <th class="p-4">Prix Unit. TTC (20%)</th>
+                                    <th class="p-4">Quantité</th>
+                                    <th class="p-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stock-table-body" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: CLIENTS & SUPPLIERS -->
+            <section id="tab-clients" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-800">Répertoire Clients & Fournisseurs</h2>
+                        <p class="text-xs text-slate-500">Gestion des contacts, ICE et encours de créances.</p>
+                    </div>
+                    <button onclick="openAddClientModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center space-x-2 shadow-sm">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Nouveau Contact</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold">
+                                    <th class="p-4">Nom / Entreprise</th>
+                                    <th class="p-4">Type</th>
+                                    <th class="p-4">Téléphone</th>
+                                    <th class="p-4">ICE</th>
+                                    <th class="p-4 text-right">Solde (DH)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clients-table-body" class="divide-y divide-slate-100">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- MODAL: ADD / EDIT PRODUCT -->
+    <div id="product-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 id="product-modal-title" class="text-base font-bold text-slate-800">Ajouter un Article au Stock</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Désignation / Description / Article</label>
+                    <input type="text" id="p-name" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-600" placeholder="Ex: Pâte à polir S400">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Prix Unitaire TTC (Calcul automatique HT - 20%)</label>
+                    <input type="number" step="0.01" id="p-ttc" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-600" placeholder="0.00">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Quantité Initiale</label>
+                    <input type="number" id="p-qty" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-indigo-600" placeholder="10">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-3">
+                <button onclick="closeProductModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition">Annuler</button>
+                <button onclick="saveProduct()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: INVOICE BUILDER / VIEWER -->
+    <div id="invoice-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8 space-y-6 my-8 print-area">
+            <!-- Header Enterprise Info -->
+            <div class="flex justify-between items-start border-b border-slate-200 pb-6">
+                <div>
+                    <h2 class="text-xl font-bold text-indigo-700">HYNCOAT QUARTZ sarlau</h2>
+                    <p class="text-xs text-slate-500 mt-1">Avenue Hassan II, Zankat Abdri, Imm 3ème étage, Appt N°9, Rabat</p>
+                    <p class="text-xs text-slate-500">ICE: 003911661000014 | RC: 196475 | IF: 1901830</p>
+                </div>
+                <div class="text-right">
+                    <h3 id="inv-modal-type-title" class="text-lg font-bold text-slate-800">FACTURE</h3>
+                    <p id="inv-modal-number" class="text-xs text-slate-500 mt-1">N° FAC-2026-001</p>
+                    <p id="inv-modal-date" class="text-xs text-slate-500">Date: 31/10/2026</p>
+                </div>
+            </div>
+
+            <!-- Client Selector & Inputs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 no-print bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Type de Document</label>
+                    <select id="inv-type" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                        <option value="Facture">Facture</option>
+                        <option value="Devis">Devis</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Client</label>
+                    <input type="text" id="inv-client" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" placeholder="Nom du Client / Société">
+                </div>
+            </div>
+
+            <!-- Invoice Items Table -->
+            <div>
+                <div class="flex justify-between items-center mb-3 no-print">
+                    <h4 class="text-sm font-bold text-slate-800">Lignes de Facturation</h4>
+                    <button onclick="addInvoiceLine()" class="text-indigo-600 hover:text-indigo-700 text-xs font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Ajouter une ligne
+                    </button>
+                </div>
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs font-semibold">
+                            <th class="p-2.5">Désignation</th>
+                            <th class="p-2.5 w-24">Qté</th>
+                            <th class="p-2.5 w-32">P.U. TTC</th>
+                            <th class="p-2.5 w-32 text-right">Total TTC</th>
+                            <th class="p-2.5 w-10 no-print"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-lines-body" class="divide-y divide-slate-100">
+                        <!-- Dynamic items -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totals Calculation -->
+            <div class="border-t border-slate-200 pt-4 flex justify-end">
+                <div class="w-64 space-y-2 text-sm">
+                    <div class="flex justify-between text-slate-600">
+                        <span>Total HT:</span>
+                        <span id="inv-subtotal-ht">0.00 DH</span>
+                    </div>
+                    <div class="flex justify-between text-slate-600">
+                        <span>TVA (20%):</span>
+                        <span id="inv-total-tva">0.00 DH</span>
+                    </div>
+                    <div class="flex justify-between font-bold text-slate-900 text-base border-t border-slate-200 pt-2">
+                        <span>Total TTC:</span>
+                        <span id="inv-total-ttc">0.00 DH</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-end space-x-3 pt-4 border-t border-slate-200 no-print">
+                <button onclick="closeInvoiceModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-semibold transition">Fermer</button>
+                <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-semibold transition flex items-center space-x-1">
+                    <i class="fa-solid fa-print text-xs"></i> <span>Imprimer</span>
+                </button>
+                <button onclick="saveInvoice()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">Valider & Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State Management with LocalStorage
+        let state = JSON.parse(localStorage.getItem('hsabati_pro_state')) || {
+            stock: [
+                { id: 1, name: "Pâte à polir S400", priceTTC: 180.00, qty: 15 },
+                { id: 2, name: "Vernis Sikkens HS Plus", priceTTC: 420.00, qty: 8 },
+                { id: 3, name: "Apprêt Cromax 1051R", priceTTC: 250.00, qty: 12 }
+            ],
+            invoices: [
+                { id: "FAC-2026-001", type: "Facture", client: "Garage Al Amal", date: "2026-10-30", totalTTC: 1250.00, status: "Payée" }
+            ],
+            clients: [
+                { id: 1, name: "Garage Al Amal", type: "Client", phone: "+212 600-000000", ice: "001234567000011", balance: 0.00 },
+                { id: 2, name: "CODIP Sarl", type: "Fournisseur", phone: "+212 522-000000", ice: "009876543000022", balance: -4500.00 }
+            ]
+        };
+
+        function saveData() {
+            localStorage.setItem('hsabati_pro_state', JSON.stringify(state));
+            updateDashboard();
+        }
+
+        // Navigation Controller
+        function switchTab(tabId) {
+            ['dashboard', 'invoices', 'stock', 'clients'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`nav-${t}`).className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-slate-600 hover:bg-slate-50 hover:text-slate-900";
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`nav-${tabId}`).className = "w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition text-indigo-700 bg-indigo-50";
+            
+            if(tabId === 'stock') renderStock();
+            if(tabId === 'invoices') renderInvoices();
+            if(tabId === 'clients') renderClients();
+        }
+
+        // Dashboard & KPIs
+        function updateDashboard() {
+            let totalCA = state.invoices.filter(i => i.status === 'Payée').reduce((sum, i) => sum + i.totalTTC, 0);
+            let totalPending = state.invoices.filter(i => i.status === 'En attente').reduce((sum, i) => sum + i.totalTTC, 0);
+            let totalStockCount = state.stock.reduce((sum, s) => sum + parseInt(s.qty || 0), 0);
+            let totalTVA = totalCA - (totalCA / 1.2);
+
+            document.getElementById('kpi-ca').innerHTML = `${totalCA.toFixed(2)} <span class="text-xs font-normal text-slate-500">DH</span>`;
+            document.getElementById('kpi-pending').innerHTML = `${totalPending.toFixed(2)} <span class="text-xs font-normal text-slate-500">DH</span>`;
+            document.getElementById('kpi-stock-count').innerText = totalStockCount;
+            document.getElementById('kpi-tva').innerHTML = `${totalTVA.toFixed(2)} <span class="text-xs font-normal text-slate-500">DH</span>`;
+        }
+
+        // Stock Management & OCR simulation
+        function renderStock() {
+            const tbody = document.getElementById('stock-table-body');
+            tbody.innerHTML = '';
+            if(state.stock.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-400 text-sm">Aucun article en stock.</td></tr>`;
+                return;
+            }
+            state.stock.forEach(item => {
+                let priceHT = item.priceTTC / 1.2;
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="p-4 font-medium text-slate-800">${item.name}</td>
+                        <td class="p-4 text-slate-600">${priceHT.toFixed(2)} DH</td>
+                        <td class="p-4 text-slate-600">${item.priceTTC.toFixed(2)} DH</td>
+                        <td class="p-4 text-slate-600"><span class="bg-slate-100 px-2.5 py-1 rounded-lg text-xs font-semibold">${item.qty}</span></td>
+                        <td class="p-4 text-right">
+                            <button onclick="deleteStockItem(${item.id})" class="text-rose-500 hover:text-rose-700 text-xs font-medium p-1"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function clearStockMemory() {
+            if(confirm("Voulez-vous vraiment vider toute la mémoire du stock pour saisir une nouvelle facture ?")) {
+                state.stock = [];
+                saveData();
+                renderStock();
+            }
+        }
+
+        function openAddProductModal() {
+            document.getElementById('p-name').value = '';
+            document.getElementById('p-ttc').value = '';
+            document.getElementById('p-qty').value = '1';
+            document.getElementById('product-modal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('product-modal').classList.add('hidden');
+        }
+
+        function saveProduct() {
+            let name = document.getElementById('p-name').value;
+            let priceTTC = parseFloat(document.getElementById('p-ttc').value) || 0;
+            let qty = parseInt(document.getElementById('p-qty').value) || 0;
+            if(!name) { alert("Veuillez saisir la désignation"); return; }
+            
+            state.stock.push({ id: Date.now(), name, priceTTC, qty });
+            saveData();
+            closeProductModal();
+            renderStock();
+        }
+
+        function deleteStockItem(id) {
+            state.stock = state.stock.filter(s => s.id !== id);
+            saveData();
+            renderStock();
+        }
+
+        function simulateOCRImport() {
+            // Extracts based on keywords: Designation, Description, Articles, etc.
+            let simulatedItems = [
+                { name: "Pâte à polir S500", priceTTC: 195.00, qty: 20 },
+                { name: "Disque de ponçage P1500", priceTTC: 45.00, qty: 50 }
+            ];
+            simulatedItems.forEach(item => state.stock.push({ id: Date.now() + Math.random(), ...item }));
+            saveData();
+            renderStock();
+            alert("Facture fournisseur scannée avec succès ! Articles ajoutés au stock (TVA 20% convertie en HT).");
+        }
+
+        // Invoices Management
+        function renderInvoices() {
+            const tbody = document.getElementById('invoices-table-body');
+            tbody.innerHTML = '';
+            if(state.invoices.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400 text-sm">Aucune facture enregistrée.</td></tr>`;
+                return;
+            }
+            state.invoices.forEach(inv => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="p-4 font-semibold text-slate-800">${inv.id}</td>
+                        <td class="p-4 text-slate-600"><span class="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs font-semibold">${inv.type}</span></td>
+                        <td class="p-4 text-slate-800">${inv.client}</td>
+                        <td class="p-4 text-slate-600">${inv.date}</td>
+                        <td class="p-4 font-semibold text-slate-800">${inv.totalTTC.toFixed(2)} DH</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${inv.status === 'Payée' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}">${inv.status}</span></td>
+                        <td class="p-4 text-right space-x-2">
+                            <button onclick="toggleInvoiceStatus('${inv.id}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-medium" title="changer statut"><i class="fa-solid fa-rotate"></i></button>
+                            <button onclick="deleteInvoice('${inv.id}')" class="text-rose-500 hover:text-rose-700 text-xs font-medium"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openNewInvoiceModal() {
+            document.getElementById('inv-client').value = '';
+            document.getElementById('inv-modal-number').innerText = `N° FAC-2026-0${state.invoices.length + 1}`;
+            document.getElementById('invoice-lines-body').innerHTML = '';
+            addInvoiceLine();
+            document.getElementById('invoice-modal').classList.remove('hidden');
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoice-modal').classList.add('hidden');
+        }
+
+        function addInvoiceLine() {
+            const tbody = document.getElementById('invoice-lines-body');
+            let tr = document.createElement('tr');
+            tr.className = "border-b border-slate-100";
+            tr.innerHTML = `
+                <td class="p-2"><input type="text" class="inv-line-name w-full border border-slate-200 rounded-lg px-2 py-1 text-sm" placeholder="Désignation article"></td>
+                <td class="p-2"><input type="number" value="1" oninput="calculateInvoiceTotals()" class="inv-line-qty w-full border border-slate-200 rounded-lg px-2 py-1 text-sm"></td>
+                <td class="p-2"><input type="number" step="0.01" value="0.00" oninput="calculateInvoiceTotals()" class="inv-line-price w-full border border-slate-200 rounded-lg px-2 py-1 text-sm"></td>
+                <td class="p-2 text-right font-semibold text-slate-800 inv-line-total">0.00 DH</td>
+                <td class="p-2 text-center no-print"><button onclick="this.closest('tr').remove(); calculateInvoiceTotals();" class="text-rose-500 hover:text-rose-700 text-xs"><i class="fa-solid xmark fa-x"></i></button></td>
+            `;
+            tbody.appendChild(tr);
+            calculateInvoiceTotals();
+        }
+
+        function calculateInvoiceTotals() {
+            let totalTTC = 0;
+            document.querySelectorAll('#invoice-lines-body tr').forEach(tr => {
+                let qty = parseFloat(tr.querySelector('.inv-line-qty').value) || 0;
+                let price = parseFloat(tr.querySelector('.inv-line-price').value) || 0;
+                let lineTotal = qty * price;
+                tr.querySelector('.inv-line-total').innerText = lineTotal.toFixed(2) + ' DH';
+                totalTTC += lineTotal;
+            });
+            let totalHT = totalTTC / 1.2;
+            let totalTVA = totalTTC - totalHT;
+
+            document.getElementById('inv-subtotal-ht').innerText = totalHT.toFixed(2) + ' DH';
+            document.getElementById('inv-total-tva').innerText = totalTVA.toFixed(2) + ' DH';
+            document.getElementById('inv-total-ttc').innerText = totalTTC.toFixed(2) + ' DH';
+        }
+
+        function saveInvoice() {
+            let client = document.getElementById('inv-client').value || "Client Comptoir";
+            let type = document.getElementById('inv-type').value;
+            let totalTTCText = document.getElementById('inv-total-ttc').innerText;
+            let totalTTC = parseFloat(totalTTCText) || 0;
+
+            state.invoices.push({
+                id: `FAC-2026-0${state.invoices.length + 1}`,
+                type,
+                client,
+                date: new Date().toISOString().split('T')[0],
+                totalTTC,
+                status: "Payée"
+            });
+            saveData();
+            closeInvoiceModal();
+            renderInvoices();
+        }
+
+        function toggleInvoiceStatus(id) {
+            let inv = state.invoices.find(i => i.id === id);
+            if(inv) {
+                inv.status = inv.status === 'Payée' ? 'En attente' : 'Payée';
+                saveData();
+                renderInvoices();
+            }
+        }
+
+        function deleteInvoice(id) {
+            state.invoices = state.invoices.filter(i => i.id !== id);
+            saveData();
+            renderInvoices();
+        }
+
+        // Clients Management
+        function renderClients() {
+            const tbody = document.getElementById('clients-table-body');
+            tbody.innerHTML = '';
+            state.clients.forEach(c => {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50">
+                        <td class="p-4 font-semibold text-slate-800">${c.name}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded text-xs font-semibold ${c.type === 'Client' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}">${c.type}</span></td>
+                        <td class="p-4 text-slate-600">${c.phone}</td>
+                        <td class="p-4 text-slate-600">${c.ice}</td>
+                        <td class="p-4 text-right font-semibold ${c.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${c.balance.toFixed(2)} DH</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function openAddClientModal() {
+            let name = prompt("Nom du Client ou Fournisseur :");
+            if(!name) return;
+            let type = confirm("Est-ce un Client ? (Cliquez OK pour Client, Annuler pour Fournisseur)") ? "Client" : "Fournisseur";
+            state.clients.push({ id: Date.now(), name, type, phone: "+212 6...", ice: "0000000000000", balance: 0.00 });
+            saveData();
+            renderClients();
+        }
+
+        function exportData() {
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            let dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "hsabati_backup.json");
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        // Initial Chart Setup
+        window.addEventListener('DOMContentLoaded', () => {
+            updateDashboard();
+            const ctx = document.getElementById('activityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct'],
+                    datasets: [{
+                        label: 'Chiffre d\'Affaires (DH)',
+                        data: [12000, 19000, 15000, 22000, 28000, 25000, 31000, 29000, 35000, 42000],
+                        backgroundColor: '#6366f1',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { borderDash: [4, 4] } }, x: { grid: { display: false } } }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
