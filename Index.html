@@ -357,7 +357,7 @@
     <div id="barcodeModal" class="fixed inset-0 bg-slate-900/60 hidden backdrop-blur-sm flex items-center justify-center z-50 p-4 no-print">
         <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden text-center p-6 space-y-4">
             <h3 class="font-bold text-base text-slate-900">مسح كود الباركود بالكاميرا</h3>
-            <p class="text-xs text-slate-500">قم بتوجيه الكاميرا نحو باركود المنتج (سيتعرف عليه التطبيق تلقائياً)</p>
+            <p class="text-xs text-slate-500">قم بتوجيه الكاميرا نحو باركود المنتج</p>
             
             <div class="relative bg-black rounded-lg overflow-hidden h-64 flex items-center justify-center">
                 <video id="barcode-video" class="w-full h-full object-cover"></video>
@@ -549,14 +549,6 @@
             }
             document.getElementById('barcodeModal').classList.add('hidden');
             activeBarcodeTargetInput = null;
-        }
-
-        // محاكاة التقاط الكود أو إدخاله عبر الباركود السريع
-        function simulateBarcodeRead(code) {
-            if (activeBarcodeTargetInput) {
-                document.getElementById(activeBarcodeTargetInput).value = code;
-            }
-            closeBarcodeScanner();
         }
 
         // --- DASHBOARD & CHARTS ---
@@ -754,7 +746,7 @@
             let totalTtc = currentCreditItems.reduce((acc, item) => acc + item.total, 0);
             let reste = totalTtc - advance;
 
-            // 1. الخصم التلقائي للمنتجات من المخزون
+            // الخصم التلقائي للمنتجات من المخزون
             currentCreditItems.forEach(item => {
                 const p = products.find(prod => prod.id === item.productId);
                 if(p) {
@@ -762,7 +754,6 @@
                 }
             });
 
-            // 2. تسجيل عملية التقسيط
             credits.push({
                 id: 'CR-' + Date.now().toString().slice(-6),
                 client,
